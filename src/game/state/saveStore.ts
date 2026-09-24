@@ -50,6 +50,8 @@ export async function loadActiveRun(): Promise<GameState | undefined> {
     player: { ...saved.player, abilities: abilities as GameState["player"]["abilities"] },
     values: saved.values ?? {},
     resonance: typeof legacy.resonance === "number" ? zeroResonance() : { ...zeroResonance(), ...legacy.resonance },
+    diagnosisState: saved.diagnosisState ?? Object.fromEntries(Object.values(saved.patients).flatMap(patient => patient.diagnoses).map((id, order) => [id, { unlocked: true, isPrimary: false, linkedClues: [], order }])),
+    timeline: saved.timeline ?? [],
   };
 }
 

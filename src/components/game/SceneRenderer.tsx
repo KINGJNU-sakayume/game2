@@ -1,48 +1,26 @@
 "use client";
-
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { evaluateConditions } from "@/game/engine/conditionResolver";
 import { getAvailableChoices } from "@/game/engine/nodeResolver";
 import { useGameStore } from "@/game/state/gameStore";
 import type { ChapterDefinition, PlayerState } from "@/game/types";
-import { ChoiceList } from "./ChoiceList";
-import { NarrativeBlock } from "./NarrativeBlock";
 import { formatGameTime } from "@/game/abilities";
 import { createChapter01Archive } from "@/game/engine/endingResolver";
-
-const labels = { appropriate: "적절함", late: "지연됨", failed: "진단 실패", delayed: "지연됨", sufficient: "충분히 확인", partial: "일부 확인", unknown: "확인하지 못함", trusted: "신뢰 유지", guarded: "조심스러운 관계", broken: "관계 단절" } as const;
+import { CaseButton } from "@/components/case/CaseButton"; import { CaseSheet } from "@/components/case/CaseSheet";
+import { selectReflectionBlocks } from "@/game/presentation/selectReflectionBlocks";
+import { ChoiceList } from "./ChoiceList"; import { NarrativeFeed } from "./NarrativeFeed"; import { GameShell } from "./GameShell"; import { SceneHeader } from "./SceneHeader"; import { SceneMedia } from "./SceneMedia"; import { ClinicalStrip } from "./ClinicalStrip"; import { CaseArchiveView } from "./CaseArchiveView";
 
 export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition; player: PlayerState }) {
-  const { activeRun, hydrated, inputLocked, hydrate, initialize, choose, enter, restart } = useGameStore();
-  useEffect(() => { void hydrate(); }, [hydrate]);
-  useEffect(() => { if (hydrated && !activeRun) initialize(chapter, player); }, [activeRun, chapter, hydrated, initialize, player]);
-  const node = activeRun ? chapter.nodes[activeRun.currentNodeId] : undefined;
-  const autoAdvanceMs = node?.presentation?.autoAdvanceMs;
-  const autoNext = node?.autoNext;
-  useEffect(() => {
-    if (!autoNext || autoAdvanceMs === undefined) return;
-    const timer = window.setTimeout(() => enter(chapter, autoNext), autoAdvanceMs);
-    return () => window.clearTimeout(timer);
-  }, [autoAdvanceMs, autoNext, chapter, enter]);
-  if (!hydrated || !activeRun) return <main className="grid min-h-dvh place-items-center text-stone-400" aria-live="polite">기록을 불러오는 중…</main>;
-  if (!node) return <main className="p-8 text-red-200">장면을 찾을 수 없습니다.</main>;
-  const choices = getAvailableChoices(node, activeRun);
-  const blocks = node.blocks.filter((block) => evaluateConditions(block.conditions, activeRun));
-  const presentation = node.presentation;
-  return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-10">
-      {presentation?.mode !== "immersive" && <header className="mb-12 flex items-center justify-between border-b border-white/10 pb-4">
-        {!presentation?.hideCase && <span className="text-xs font-medium tracking-[.22em] text-amber-200/70">{chapter.title}</span>}
-        <div className="flex gap-4 text-xs text-stone-500" aria-label="현재 상태">{!presentation?.hideTime && <span>{presentation?.timeLabel ?? formatGameTime(activeRun.time)}</span>}{presentation?.location && <span>{presentation.location}</span>}</div>
-      </header>}
-      <article className="flex-1" aria-labelledby="scene-title">
-        {presentation?.imageKey && <div className={`scene-image scene-image-${presentation.imageKey}`} role="img" aria-label={presentation.imageKey === "rehearsal" ? "빈 객석을 향한 무대 리허설" : "응급실 07의 진료 공간"} />}
-        {node.title && <h1 id="scene-title" className="mb-8 font-serif text-3xl font-medium tracking-tight text-stone-50">{node.title}</h1>}
-        {blocks.map((block, index) => <NarrativeBlock block={block} key={index} />)}
-        {node.id === "CASE_ARCHIVE" && (() => { const archive = createChapter01Archive(activeRun); return <section className="my-8 space-y-3 border-y border-white/10 py-6 text-sm text-stone-300" aria-label="Case Archive outcomes"><p>진단: {labels[archive.diagnosis]}</p><p>치료: {labels[archive.treatment]}</p><p>촉발 요인: {labels[archive.trigger]}</p><p>관계: {labels[archive.relationship]}</p><p>확인한 촉발 요인: {archive.triggersDiscovered.join(", ") || "없음"}</p><p>경과: {archive.outcome}</p><p>후속: {archive.followUp}</p></section>; })()}
-        <ChoiceList choices={choices} disabled={inputLocked} onChoose={(id) => id === "restart" ? void restart(chapter, player) : void choose(chapter, id)} />
-      </article>
-      <footer className="mt-16 text-center text-[11px] tracking-widest text-stone-600">AFTER THE RAIN</footer>
-    </main>
-  );
+  const store=useGameStore(); const { activeRun,hydrated,inputLocked,hydrate,initialize,choose,enter,restart }=store; const [caseOpen,setCaseOpen]=useState(false); const articleRef=useRef<HTMLElement>(null);
+  useEffect(()=>{void hydrate();},[hydrate]); useEffect(()=>{if(hydrated&&!activeRun)initialize(chapter,player);},[activeRun,chapter,hydrated,initialize,player]);
+  const node=activeRun?chapter.nodes[activeRun.currentNodeId]:undefined; const autoAdvanceMs=node?.presentation?.autoAdvanceMs; const autoNext=node?.autoNext;
+  useEffect(()=>{if(!autoNext||autoAdvanceMs===undefined||caseOpen)return;const timer=window.setTimeout(()=>enter(chapter,autoNext),autoAdvanceMs);return()=>window.clearTimeout(timer);},[autoAdvanceMs,autoNext,caseOpen,chapter,enter]);
+  useEffect(()=>{articleRef.current?.scrollIntoView({block:"start"});},[activeRun?.currentNodeId]);
+  if(!hydrated||!activeRun)return <main className="loading-screen" aria-live="polite">기록을 불러오는 중…</main>; if(!node)return <main>장면을 찾을 수 없습니다.</main>;
+  const visibleBlocks=node.blocks.filter(block=>evaluateConditions(block.conditions,activeRun)); const blocks=node.id==="REFLECTION"?selectReflectionBlocks(visibleBlocks,activeRun):visibleBlocks; const presentation=node.presentation; const immersive=presentation?.mode==="immersive"; const showCase=!immersive&&!presentation?.hideCase;
+  return <GameShell immersive={immersive} hasCase={showCase}>
+    {!immersive&&<SceneHeader time={presentation?.hideTime?undefined:presentation?.timeLabel??formatGameTime(activeRun.time)} location={presentation?.location}/>}<SceneMedia imageKey={presentation?.imageKey}/>
+    <article ref={articleRef} className="scene-content" aria-labelledby={node.title?"scene-title":undefined}>{node.title&&<h1 id="scene-title">{node.title}</h1>}<ClinicalStrip data={presentation?.hideVitals?undefined:presentation?.clinicalData}/><NarrativeFeed blocks={blocks}/>{node.id==="CASE_ARCHIVE"&&<CaseArchiveView archive={createChapter01Archive(activeRun)}/>}<ChoiceList choices={getAvailableChoices(node,activeRun)} disabled={inputLocked} onChoose={id=>id==="restart"?void restart(chapter,player):void choose(chapter,id)}/></article>
+    <footer>AFTER THE RAIN</footer>{showCase&&<CaseButton onClick={()=>setCaseOpen(true)}/>}<CaseSheet open={caseOpen} onClose={()=>setCaseOpen(false)} chapter={chapter} state={activeRun} onPrimary={store.setPrimaryDiagnosis} onMove={store.moveDiagnosis} onLink={store.toggleLinkedClue}/>
+  </GameShell>;
 }

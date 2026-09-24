@@ -27,7 +27,7 @@ export const differentialNodes: Record<string, StoryNode> = {
   TEST_PORPH_01: { id: "TEST_PORPH_01", title: "검사 선택", blocks: [p("급성 발작을 확인할 검사를 선택한다.")], choices: [
     { id: "pbg", label: "소변 PBG / ALA", next: "TEST_PBG_01" }, { id: "genetic", label: "유전자검사", next: "TEST_GENETIC_01" }, { id: "total", label: "총 소변 포르피린", next: "TEST_TOTALPOR_01" },
   ] },
-  TEST_PBG_01: { id: "TEST_PBG_01", blocks: [s("Spot urine.\n급성 발작 중 생화학적 확인을 위한 검사."), d("강수진", "“차광해서 바로 보낼게요.”"), thought("observation", "색으로 진단하는 병은 아니다."), thought("reasoning", "숫자로 확인한다.")], onEnter: [setFlag("pbg_ordered"), { type: "test", patientId: "harin", testId: "urine_pbg_ala", status: "pending" }], choices: go("WAIT_001") },
+  TEST_PBG_01: { id: "TEST_PBG_01", blocks: [s("Spot urine.\n급성 발작 중 생화학적 확인을 위한 검사."), d("강수진", "“차광해서 바로 보낼게요.”"), thought("observation", "색으로 진단하는 병은 아니다."), thought("reasoning", "숫자로 확인한다.")], onEnter: [setFlag("pbg_ordered"), { type: "test", patientId: "harin", testId: "urine_pbg_ala", status: "pending" }, { type: "timeline", entry: { id: "pbg-ordered", time: 1429, kind: "test", text: "PBG / ALA ordered" } }], choices: go("WAIT_001") },
   TEST_GENETIC_01: { id: "TEST_GENETIC_01", blocks: [s("예상 결과: 수일."), thought("reasoning", "맞는 검사가\n항상 지금 필요한 검사는 아니다.")], onEnter: [{ type: "test", patientId: "harin", testId: "porphyria_genetic", status: "ordered" }], choices: go("TEST_PORPH_01", "급성기 검사를 다시 선택한다") },
   TEST_TOTALPOR_01: { id: "TEST_TOTALPOR_01", blocks: [thought("mechanism", "힌트는 줄 수 있다.\n\n하지만 지금 원하는 질문은\n더 구체적이다.")], onEnter: [{ type: "test", patientId: "harin", testId: "total_urine_porphyrins", status: "ordered" }], choices: go("TEST_PORPH_01", "더 구체적인 검사를 선택한다") },
 };

@@ -6,6 +6,7 @@ import type { ChapterDefinition, GameState, PersistentProfile, PlayerState } fro
 import { clearActiveRun, completeCase, emptyProfile, loadActiveRun, loadProfile, saveActiveRun, saveProfile } from "./saveStore";
 import { zeroResonance } from "@/game/abilities";
 import { createArchive } from "@/game/engine/endingResolver";
+import { moveDiagnosis, setPrimaryDiagnosis, toggleLinkedClue } from "./caseState";
 
 interface GameStore {
   activeRun: GameState | null;
@@ -19,6 +20,9 @@ interface GameStore {
   choose: (chapter: ChapterDefinition, choiceId: string) => Promise<void>;
   restore: (state: GameState) => void;
   restart: (chapter: ChapterDefinition, player: PlayerState, seed?: number) => Promise<void>;
+  setPrimaryDiagnosis: (id: string) => void;
+  moveDiagnosis: (id: string, direction: -1 | 1) => void;
+  toggleLinkedClue: (diagnosisId: string, clueId: string) => void;
 }
 
 let hydrationPromise: Promise<void> | undefined;
@@ -40,7 +44,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       values: {},
       time: chapter.initial?.time ?? 0,
       resonance: zeroResonance(), rngState: seed >>> 0,
-      checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp,
+      checkResults: {}, visitedNodeIds: [], diagnosisState: {}, timeline: [], nodeEnteredAt: timestamp, updatedAt: timestamp,
     };
     set({ activeRun: enterNode(base, chapter, chapter.startNodeId, timestamp) });
   },
@@ -98,11 +102,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   restart: async (chapter, player, seed = Date.now()) => {
     await clearActiveRun().catch(() => undefined);
     const timestamp = Date.now();
-    const base: GameState = { runId: crypto.randomUUID(), chapterId: chapter.id, currentNodeId: chapter.startNodeId, player, patients: structuredClone(chapter.initial?.patients ?? {}), flags: { ...(chapter.initial?.flags ?? {}) }, values: {}, time: chapter.initial?.time ?? 0, resonance: zeroResonance(), rngState: seed >>> 0, checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp };
+    const base: GameState = { runId: crypto.randomUUID(), chapterId: chapter.id, currentNodeId: chapter.startNodeId, player, patients: structuredClone(chapter.initial?.patients ?? {}), flags: { ...(chapter.initial?.flags ?? {}) }, values: {}, time: chapter.initial?.time ?? 0, resonance: zeroResonance(), rngState: seed >>> 0, checkResults: {}, visitedNodeIds: [], diagnosisState: {}, timeline: [], nodeEnteredAt: timestamp, updatedAt: timestamp };
     const activeRun = enterNode(base, chapter, chapter.startNodeId, timestamp);
     set({ activeRun });
 
     const results = await Promise.allSettled([saveActiveRun(activeRun), saveProfile(get().profile)]);
     set({ persistenceStatus: results.some(({ status }) => status === "rejected") ? "degraded" : "healthy" });
   },
+  setPrimaryDiagnosis: (id) => { set(({ activeRun }) => activeRun ? { activeRun: { ...activeRun, diagnosisState: setPrimaryDiagnosis(activeRun.diagnosisState ?? {}, id) } } : {}); const state=get().activeRun;if(state)void saveActiveRun(state).catch(()=>set({persistenceStatus:"degraded"})); },
+  moveDiagnosis: (id, direction) => { set(({ activeRun }) => {
+    if (!activeRun) return {};
+    return { activeRun: { ...activeRun, diagnosisState: moveDiagnosis(activeRun.diagnosisState ?? {},id,direction) } };
+  }); const moved=get().activeRun;if(moved)void saveActiveRun(moved).catch(()=>set({persistenceStatus:"degraded"})); },
+  toggleLinkedClue: (diagnosisId, clueId) => { set(({ activeRun }) => {
+    if (!activeRun?.diagnosisState?.[diagnosisId]) return {};
+    return { activeRun: { ...activeRun, diagnosisState: toggleLinkedClue(activeRun.diagnosisState,diagnosisId,clueId) } };
+  }); const linked=get().activeRun;if(linked)void saveActiveRun(linked).catch(()=>set({persistenceStatus:"degraded"})); },
 }));
