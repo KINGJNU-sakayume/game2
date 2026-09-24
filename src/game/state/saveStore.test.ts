@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { GameState } from "@/game/types";
-import { clearActiveRun, loadActiveRun, saveActiveRun } from "./saveStore";
+import type { CaseArchive, GameState } from "@/game/types";
+import { clearActiveRun, completeCase, emptyProfile, loadActiveRun, saveActiveRun } from "./saveStore";
 import { zeroResonance } from "@/game/abilities";
 
 const savedState: GameState = {
@@ -44,4 +44,10 @@ describe("active run persistence", () => {
     });
     expect(restored?.checkResults).toEqual(savedState.checkResults);
   });
+});
+
+describe("permanent profile", () => {
+  const memory = { id: "normal_is_not_diagnosis", title: "정상은 진단이 아니다", description: "memory", sourceChapter: "chapter-01" };
+  const archive: CaseArchive = { caseId: "CASE 01", title: "case", finalDiagnosis: "AIP", biochemicalDiagnosis: "AHP", subtypeConfirmation: "HMBS", diagnosis: "appropriate", treatment: "appropriate", trigger: "sufficient", relationship: "trusted", triggersDiscovered: [], complications: [], outcome: "recovered", followUp: "clinic", endingId: "END_A" };
+  it("deduplicates memories and archives while setting first completion", () => { const once=completeCase(emptyProfile(),"chapter-01",memory,archive); const twice=completeCase(once,"chapter-01",memory,archive); expect(twice.caseMemories).toHaveLength(1); expect(twice.archives).toHaveLength(1); expect(twice.completedCases).toEqual(["chapter-01"]); expect(twice.firstEndingCompleted).toBe(true); });
 });

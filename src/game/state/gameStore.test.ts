@@ -5,11 +5,22 @@ import { zeroResonance } from "@/game/abilities";
 const persistence = vi.hoisted(() => ({
   load: vi.fn(),
   save: vi.fn(),
+  profileSave: vi.fn(),
 }));
 
 vi.mock("./saveStore", () => ({
   loadActiveRun: persistence.load,
+  loadProfile: vi.fn().mockResolvedValue({ completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false }),
   saveActiveRun: persistence.save,
+  saveProfile: persistence.profileSave,
+  clearActiveRun: vi.fn(),
+  completeCase: vi.fn((profile, caseId, memory, archive) => ({
+    completedCases: [...new Set([...profile.completedCases, caseId])],
+    caseMemories: profile.caseMemories.some((item: { id: string }) => item.id === memory.id) ? profile.caseMemories : [...profile.caseMemories, memory],
+    archives: [...profile.archives.filter((item: { caseId: string }) => item.caseId !== archive.caseId), archive],
+    firstEndingCompleted: true,
+  })),
+  emptyProfile: () => ({ completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false }),
 }));
 
 import { useGameStore } from "./gameStore";
@@ -59,8 +70,10 @@ function initialState(): GameState {
 describe("gameStore persistence failures", () => {
   beforeEach(() => {
     persistence.save.mockReset();
+    persistence.profileSave.mockReset();
     useGameStore.setState({
       activeRun: initialState(),
+      profile: { completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false },
       hydrated: true,
       inputLocked: false,
       persistenceStatus: "healthy",
@@ -103,6 +116,44 @@ describe("gameStore persistence failures", () => {
     expect(retriedState.checkResults["persistent-check"]).toEqual(originalResult);
     expect(retriedState.rngState).toBe(rngAfterCheck);
     expect(useGameStore.getState().persistenceStatus).toBe("healthy");
+  });
+
+  it("records permanent case completion even when the active-run save fails", async () => {
+    const completionChapter: ChapterDefinition = {
+      id: "complete-test",
+      title: "Complete",
+      startNodeId: "start",
+      nodes: {
+        start: { id: "start", blocks: [], choices: [{ id: "finish", label: "Finish", next: "CASE_COMPLETE" }] },
+        CASE_COMPLETE: { id: "CASE_COMPLETE", blocks: [] },
+      },
+      completion: {
+        caseId: "complete-test",
+        memory: { id: "memory", title: "Memory", description: "Description", sourceChapter: "complete-test" },
+        archive: {
+          caseId: "CASE TEST",
+          title: "Test archive",
+          finalDiagnosis: "Diagnosis",
+          biochemicalDiagnosis: "Biochemical",
+          subtypeConfirmation: "Subtype",
+          complications: [],
+        },
+      },
+    };
+    const run = { ...initialState(), chapterId: completionChapter.id };
+    useGameStore.setState({ activeRun: run });
+    persistence.save.mockRejectedValueOnce(new Error("active run unavailable"));
+    persistence.profileSave.mockResolvedValueOnce(undefined);
+
+    await useGameStore.getState().choose(completionChapter, "finish");
+
+    const result = useGameStore.getState();
+    expect(result.activeRun?.currentNodeId).toBe("CASE_COMPLETE");
+    expect(result.profile.firstEndingCompleted).toBe(true);
+    expect(result.profile.completedCases).toContain("complete-test");
+    expect(persistence.profileSave).toHaveBeenCalledTimes(1);
+    expect(result.persistenceStatus).toBe("degraded");
+    expect(result.inputLocked).toBe(false);
   });
 
   it("restores the same current node from a saved run", async () => {
