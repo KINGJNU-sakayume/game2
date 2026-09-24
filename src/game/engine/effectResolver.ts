@@ -1,13 +1,21 @@
 import type { Effect, GameState, PatientState } from "@/game/types";
 import { evaluateConditions } from "./conditionResolver";
-import { appendTimeline } from "@/game/state/caseState";
+import { appendTimeline, setPrimaryDiagnosis } from "@/game/state/caseState";
 
 const clampTrust = (value: number) => Math.min(100, Math.max(0, value));
 
 export function applyEffect(state: GameState, effect: Effect): GameState {
   if (effect.type === "timeline") {
-    const timeline = appendTimeline(state.timeline ?? [], effect.entry);
+    const timeline = appendTimeline(state.timeline ?? [], { ...effect.entry, time: effect.entry.time ?? state.time });
     return timeline === state.timeline ? state : { ...state, timeline };
+  }
+  if (effect.type === "primaryDiagnosis") {
+    const existing = state.diagnosisState ?? {};
+    const current = existing[effect.diagnosisId] ?? { unlocked: true, isPrimary: false, linkedClues: [], order: Object.keys(existing).length };
+    return {
+      ...state,
+      diagnosisState: setPrimaryDiagnosis({ ...existing, [effect.diagnosisId]: { ...current, unlocked: true } }, effect.diagnosisId),
+    };
   }
   if (effect.type === "conditional") return evaluateConditions(effect.conditions, state) ? applyEffects(state, effect.effects) : state;
   if (effect.type === "flag") return { ...state, flags: { ...state.flags, [effect.key]: effect.value } };
