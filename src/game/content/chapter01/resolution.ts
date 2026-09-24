@@ -9,6 +9,10 @@ const relationshipOkay: Condition = { type: "all", conditions: [{ type: "trust",
 const triggerEnough: Condition = { type: "all", conditions: [flag("restricted_diet_known"), flag("ocp_known")] };
 const triggerMissing: Condition = { type: "any", conditions: [not("restricted_diet_known"), not("ocp_known")] };
 const successful: Condition = { type: "value", key: "diagnosis_outcome", value: "failed", operator: "neq" };
+const diagnosisLate: Condition = value("diagnosis_outcome", "late");
+const treatmentAppropriate: Condition = value("treatment_timing", "appropriate");
+const treatmentDelayed: Condition = value("treatment_timing", "delayed");
+const delayedOutcome: Condition = { type: "any", conditions: [diagnosisLate, treatmentDelayed, flag("treatment_delay_significant")] };
 
 export const resolutionNodes: Record<string, StoryNode> = {
   WAIT_001: { id: "WAIT_001", title: "PBG / ALA pending", blocks: [p("하린의 근력저하는 진행 중이다."), thought("decision", "검사 결과가\n치료 시점을 정해주는 건 아니다."), thought("reasoning", "확신과 성급함은 다르다."), thought("empathy", "틀릴 경우 위험을 감당하는 건 환자다.")], choices: [
@@ -58,13 +62,22 @@ export const resolutionNodes: Record<string, StoryNode> = {
   DISCHARGE_001: { id: "DISCHARGE_001", title: "퇴원 계획", blocks: [p("유발 가능 약물과 호르몬 노출을 검토한다. 무리한 금식과 극단적 식사 제한을 피하고, 비슷한 증상이 생기면 급성 포르피린증 병력을 알리도록 설명한다. 유전 상담과 아형 검사를 예약한다."), p("잔여 근력저하에 대한 재활치료 계획을 강조한다.", [flag("treatment_delay_significant")]), p("점진적인 일상 복귀 계획을 확인한다.", [not("treatment_delay_significant")])], choices: go("EP_001") },
   EP_001: { id: "EP_001", title: "17일 후", blocks: [s("HMBS pathogenic variant identified."), s("최종 아형 진단: 급성 간헐성 포르피린증\nAcute Intermittent Porphyria"), thought("reasoning", "이제 아형까지 이름이 생겼다.")], onEnter: [setFlag("aip_confirmed"), { type: "value", key: "final_diagnosis", value: "acute_intermittent_porphyria" }, { type: "test", patientId: "harin", testId: "hmbs_variant", status: "positive" }], choices: go("EP_002") },
   EP_002: { id: "EP_002", blocks: [d("윤하린", "“오늘 물병 혼자 열었어요.”", [{ type: "trust", patientId: "harin", operator: "gte", value: 60 }]), p("외래 기록으로 회복 경과를 확인한다.", [{ type: "all", conditions: [{ type: "trust", patientId: "harin", operator: "gte", value: 30 }, { type: "trust", patientId: "harin", operator: "lt", value: 60 }] }]), p("후속 진료가 다른 진료팀으로 전환된다.", [{ type: "any", conditions: [trustBelow(30), boundaryBroken] }])], choices: go("END_CALC") },
-  FAIL_001: { id: "FAIL_001", blocks: [p("시간이 흐르고 하린의 근력저하가 진행한다. 다른 팀이 재평가한다."), s("후속 기록: Urine PBG markedly elevated.\nHMBS pathogenic variant confirmed."), thought("reasoning", "정상은 진단이 아니다.")], onEnter: [{ type: "time", amount: 60 }, { type: "value", key: "diagnosis_outcome", value: "failed" }, setFlag("pbg_positive"), setFlag("aip_confirmed"), { type: "value", key: "final_diagnosis", value: "acute_intermittent_porphyria" }], choices: go("END_CALC") },
+  FAIL_001: { id: "FAIL_001", blocks: [p("시간이 흐르고 하린의 근력저하가 진행한다. 다른 팀이 재평가한다."), s("후속 기록: Urine PBG markedly elevated.\nHMBS pathogenic variant confirmed."), thought("reasoning", "정상은 진단이 아니다.")], onEnter: [
+    { type: "time", amount: 60 },
+    { type: "value", key: "diagnosis_outcome", value: "failed" },
+    setFlag("pbg_positive"),
+    setFlag("acute_hepatic_porphyria_confirmed"),
+    setFlag("aip_confirmed"),
+    { type: "test", patientId: "harin", testId: "urine_pbg_ala", status: "positive" },
+    { type: "test", patientId: "harin", testId: "hmbs_variant", status: "positive" },
+    { type: "value", key: "final_diagnosis", value: "acute_intermittent_porphyria" },
+  ], choices: go("END_CALC") },
   END_CALC: { id: "END_CALC", blocks: [p("진료 기록을 정리한다.")], choices: [
     { id: "failed", label: "기록을 마친다", conditions: [value("diagnosis_outcome", "failed")], effects: [{ type: "value", key: "ending_id", value: "END_E" }], next: "END_E" },
-    { id: "delayed", label: "기록을 마친다", conditions: [successful, flag("treatment_delay_significant")], effects: [{ type: "value", key: "ending_id", value: "END_B" }], next: "END_B" },
-    { id: "broken", label: "기록을 마친다", conditions: [successful, not("treatment_delay_significant"), boundaryBroken], effects: [{ type: "value", key: "ending_id", value: "END_C" }], next: "END_C" },
-    { id: "partial", label: "기록을 마친다", conditions: [successful, not("treatment_delay_significant"), relationshipOkay, triggerMissing], effects: [{ type: "value", key: "ending_id", value: "END_D" }], next: "END_D" },
-    { id: "complete", label: "기록을 마친다", conditions: [successful, not("treatment_delay_significant"), relationshipOkay, triggerEnough], effects: [{ type: "value", key: "ending_id", value: "END_A" }], next: "END_A" },
+    { id: "delayed", label: "기록을 마친다", conditions: [successful, delayedOutcome], effects: [{ type: "value", key: "ending_id", value: "END_B" }], next: "END_B" },
+    { id: "broken", label: "기록을 마친다", conditions: [successful, treatmentAppropriate, boundaryBroken], effects: [{ type: "value", key: "ending_id", value: "END_C" }], next: "END_C" },
+    { id: "partial", label: "기록을 마친다", conditions: [successful, treatmentAppropriate, relationshipOkay, triggerMissing], effects: [{ type: "value", key: "ending_id", value: "END_D" }], next: "END_D" },
+    { id: "complete", label: "기록을 마친다", conditions: [successful, treatmentAppropriate, relationshipOkay, triggerEnough], effects: [{ type: "value", key: "ending_id", value: "END_A" }], next: "END_A" },
   ] },
   END_A: { id: "END_A", title: "이름을 되찾다", blocks: [p("적절한 진단과 치료, 주요 촉발 요인 확인, 그리고 관계가 함께 보존됐다."), p("검사에는 아무것도 없었다.\n환자에게는 처음부터 있었다.")], choices: go("CASE_ARCHIVE") },
   END_B: { id: "END_B", title: "늦게 도착한 정답", blocks: [p("질환은 확인됐다. 하지만 운동신경병증 회복은 늦고 재활치료가 필요하다. 정답이 늦으면 정답 자체가 시간을 되돌리지는 못한다.")], choices: go("CASE_ARCHIVE") },
