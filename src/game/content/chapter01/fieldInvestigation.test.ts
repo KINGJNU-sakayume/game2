@@ -85,6 +85,23 @@ describe("field investigation", () => {
     expect(current.patients.harin.clues).toContain("maternal_family_recurrent_neurovisceral_attacks");
   });
 
+  it("does not unlock the lead red herring without enough mechanism insight", () => {
+    let current = at("REH_ENV", state({ mechanism: 2, suspicion: 4 }));
+    expect(current.flags.lead_poisoning_available).toBe(false);
+    expect(current.patients.harin.diagnoses).not.toContain("lead_poisoning");
+    current = at("REH_ENV", state({ mechanism: 3 }));
+    expect(current.flags.lead_poisoning_available).toBe(true);
+    expect(current.patients.harin.diagnoses).toContain("lead_poisoning");
+  });
+
+  it("treats contacting family after refused permission as a boundary breach", () => {
+    let current = at("FAM_PERMISSION_DELAY", state({}, 50));
+    current = choose(current, "contact-anyway");
+    expect(current.currentNodeId).toBe("FAM_002");
+    expect(current.flags.family_boundary_broken).toBe(true);
+    expect(current.patients.harin.trust).toBe(35);
+  });
+
   it("supports two locations then marks a chosen third location as overstay", () => {
     let current = state(); current.values.field_locations_visited = 2;
     current = at("FIELD_GATE", current);
