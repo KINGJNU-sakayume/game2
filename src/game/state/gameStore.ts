@@ -9,6 +9,7 @@ interface GameStore {
   activeRun: GameState | null;
   hydrated: boolean;
   inputLocked: boolean;
+  persistenceStatus: "healthy" | "saving" | "degraded";
   initialize: (chapter: ChapterDefinition, player: PlayerState, seed?: number) => void;
   hydrate: () => Promise<void>;
   enter: (chapter: ChapterDefinition, nodeId: string) => void;
@@ -22,6 +23,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   activeRun: null,
   hydrated: false,
   inputLocked: false,
+  persistenceStatus: "healthy",
   initialize: (chapter, player, seed = Date.now()) => {
     if (!get().hydrated) return;
     const timestamp = Date.now();
@@ -46,11 +48,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
   choose: async (chapter, choiceId) => {
     const current = get();
     if (!current.activeRun || current.inputLocked) return;
-    set({ inputLocked: true });
+    set({ inputLocked: true, persistenceStatus: "saving" });
     try {
       const completed = executeChoice(current.activeRun, chapter, choiceId, Date.now());
-      await saveActiveRun(completed);
       set({ activeRun: completed });
+      try {
+        await saveActiveRun(completed);
+        set({ persistenceStatus: "healthy" });
+      } catch {
+        set({ persistenceStatus: "degraded" });
+      }
+    } catch (error) {
+      set({ persistenceStatus: current.persistenceStatus });
+      throw error;
     } finally {
       set({ inputLocked: false });
     }
