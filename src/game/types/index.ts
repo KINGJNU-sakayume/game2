@@ -1,4 +1,5 @@
-export type AbilityName = "observation" | "empathy" | "reasoning" | "resolve";
+export const ABILITY_NAMES = ["observation", "history", "empathy", "mechanism", "reasoning", "suspicion", "decision"] as const;
+export type AbilityName = (typeof ABILITY_NAMES)[number];
 export type DiseaseStage = "latent" | "early" | "progressing" | "critical";
 
 export interface PlayerState {
@@ -35,7 +36,11 @@ export type Condition =
   | { type: "clue"; patientId?: string; clueId: string; present?: boolean }
   | { type: "diagnosis"; patientId?: string; diagnosisId: string; present?: boolean }
   | { type: "time"; operator?: ComparisonOperator; value: number }
-  | { type: "test"; patientId?: string; testId: string; status?: PatientState["tests"][string] };
+  | { type: "test"; patientId?: string; testId: string; status?: PatientState["tests"][string] }
+  | { type: "all"; conditions: Condition[] }
+  | { type: "any"; conditions: Condition[] }
+  | { type: "flagCount"; keys: string[]; operator?: ComparisonOperator; value: number }
+  | { type: "value"; key: string; value: string | number | boolean };
 
 export type ComparisonOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte";
 
@@ -44,11 +49,14 @@ export type Effect =
   | { type: "increment"; ability: AbilityName; amount: number }
   | { type: "trust"; patientId: string; amount: number }
   | { type: "time"; amount: number }
+  | { type: "setTime"; value: number }
   | { type: "clue"; patientId: string; clueId: string; remove?: boolean }
   | { type: "diagnosis"; patientId: string; diagnosisId: string; remove?: boolean }
   | { type: "test"; patientId: string; testId: string; status: PatientState["tests"][string] }
   | { type: "disease"; patientId: string; stage: DiseaseStage }
-  | { type: "resonance"; amount: number };
+  | { type: "resonance"; ability: AbilityName; amount: number }
+  | { type: "value"; key: string; value: string | number | boolean }
+  | { type: "conditional"; conditions: Condition[]; effects: Effect[] };
 
 export interface ActiveCheck {
   id: string;
@@ -68,13 +76,14 @@ interface ChoiceBase {
 
 export type Choice = ChoiceBase & (
   | { check?: never; next: string }
+  | { check?: never; next?: never; terminal: true }
   | { check: ActiveCheck; next: { success: string; failure: string } }
 );
 
 export type NarrativeBlock =
   | { type: "prose"; text: string; conditions?: Condition[] }
   | { type: "dialogue"; speaker: string; text: string; conditions?: Condition[] }
-  | { type: "thought"; text: string; conditions?: Condition[]; label?: string }
+  | { type: "thought"; text: string; conditions?: Condition[]; ability?: AbilityName; label?: string }
   | { type: "system"; text: string; conditions?: Condition[] };
 
 export interface ScenePresentation {
@@ -118,8 +127,9 @@ export interface GameState {
   player: PlayerState;
   patients: Record<string, PatientState>;
   flags: Record<string, boolean>;
+  values: Record<string, string | number | boolean>;
   time: number;
-  resonance: number;
+  resonance: Record<AbilityName, number>;
   rngState: number;
   checkResults: Record<string, CheckResult>;
   visitedNodeIds: string[];

@@ -36,6 +36,7 @@ export function executeChoice(state: GameState, chapter: ChapterDefinition, choi
   let next = applyEffects(state, node.onExit);
   next = applyEffects(next, choice.effects);
   if (choice.timeCost) next = { ...next, time: next.time + choice.timeCost };
+  if ("terminal" in choice && choice.terminal) return { ...next, updatedAt: timestamp };
   let destination: string;
   if (typeof choice.next === "string") destination = choice.next;
   else {

@@ -7,6 +7,7 @@ import { useGameStore } from "@/game/state/gameStore";
 import type { ChapterDefinition, PlayerState } from "@/game/types";
 import { ChoiceList } from "./ChoiceList";
 import { NarrativeBlock } from "./NarrativeBlock";
+import { formatGameTime } from "@/game/abilities";
 
 export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition; player: PlayerState }) {
   const { activeRun, hydrated, inputLocked, hydrate, initialize, choose, enter } = useGameStore();
@@ -29,7 +30,7 @@ export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition;
     <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-10">
       {presentation?.mode !== "immersive" && <header className="mb-12 flex items-center justify-between border-b border-white/10 pb-4">
         {!presentation?.hideCase && <span className="text-xs font-medium tracking-[.22em] text-amber-200/70">{chapter.title}</span>}
-        <div className="flex gap-4 text-xs text-stone-500" aria-label="현재 상태">{!presentation?.hideTime && <span>{presentation?.timeLabel ?? `경과 ${activeRun.time}분`}</span>}{presentation?.location && <span>{presentation.location}</span>}</div>
+        <div className="flex gap-4 text-xs text-stone-500" aria-label="현재 상태">{!presentation?.hideTime && <span>{presentation?.timeLabel ?? formatGameTime(activeRun.time)}</span>}{presentation?.location && <span>{presentation.location}</span>}</div>
       </header>}
       <article className="flex-1" aria-labelledby="scene-title">
         {presentation?.imageKey && <div className={`scene-image scene-image-${presentation.imageKey}`} role="img" aria-label={presentation.imageKey === "rehearsal" ? "빈 객석을 향한 무대 리허설" : "응급실 07의 진료 공간"} />}

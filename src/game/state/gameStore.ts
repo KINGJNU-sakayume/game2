@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { enterNode, executeChoice } from "@/game/engine/nodeResolver";
 import type { ChapterDefinition, GameState, PlayerState } from "@/game/types";
 import { loadActiveRun, saveActiveRun } from "./saveStore";
+import { zeroResonance } from "@/game/abilities";
 
 interface GameStore {
   activeRun: GameState | null;
@@ -32,8 +33,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player,
       patients: chapter.initial?.patients ?? {},
       flags: chapter.initial?.flags ?? {},
+      values: {},
       time: chapter.initial?.time ?? 0,
-      resonance: 0, rngState: seed >>> 0,
+      resonance: zeroResonance(), rngState: seed >>> 0,
       checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp,
     };
     set({ activeRun: enterNode(base, chapter, chapter.startNodeId, timestamp) });

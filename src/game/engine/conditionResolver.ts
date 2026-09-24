@@ -13,6 +13,10 @@ function compare(actual: number, operator: ComparisonOperator = "gte", expected:
 
 export function evaluateCondition(condition: Condition, state: GameState): boolean {
   switch (condition.type) {
+    case "all": return evaluateConditions(condition.conditions, state);
+    case "any": return condition.conditions.some((item) => evaluateCondition(item, state));
+    case "flagCount": return compare(condition.keys.filter((key) => state.flags[key]).length, condition.operator, condition.value);
+    case "value": return state.values[condition.key] === condition.value;
     case "flag":
       return Boolean(state.flags[condition.key]) === (condition.value ?? true);
     case "ability":
