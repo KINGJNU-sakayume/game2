@@ -27,6 +27,7 @@ export interface DiagnosisDefinition {
 export interface TestDefinition { id: string; nameKo: string; nameEn?: string }
 export interface DiagnosisState { unlocked: boolean; isPrimary: boolean; linkedClues: string[]; order: number }
 export interface TimelineEntry { id: string; time: number; kind: "clinical" | "decision" | "test" | "field" | "relationship"; text: string }
+export type TimelineEffectEntry = Omit<TimelineEntry, "time"> & { time?: number };
 export interface ClinicalDatum { label: string; value: string; tone?: "default" | "warning" | "critical" }
 
 export interface CheckResult {
@@ -65,12 +66,13 @@ export type Effect =
   | { type: "advanceToTime"; value: number }
   | { type: "clue"; patientId: string; clueId: string; remove?: boolean }
   | { type: "diagnosis"; patientId: string; diagnosisId: string; remove?: boolean }
+  | { type: "primaryDiagnosis"; diagnosisId: string }
   | { type: "test"; patientId: string; testId: string; status: PatientState["tests"][string] }
   | { type: "disease"; patientId: string; stage: DiseaseStage }
   | { type: "resonance"; ability: AbilityName; amount: number }
   | { type: "value"; key: string; value: string | number | boolean }
   | { type: "valueIncrement"; key: string; amount: number }
-  | { type: "timeline"; entry: TimelineEntry }
+  | { type: "timeline"; entry: TimelineEffectEntry }
   | { type: "conditional"; conditions: Condition[]; effects: Effect[] };
 
 export interface ActiveCheck {
