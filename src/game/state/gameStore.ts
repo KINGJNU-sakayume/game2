@@ -62,16 +62,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const completed = executeChoice(current.activeRun, chapter, choiceId, Date.now());
       set({ activeRun: completed });
+
+      let persistenceFailed = false;
       try {
         await saveActiveRun(completed);
-        if (completed.currentNodeId === "CASE_COMPLETE" && chapter.completion) {
-          const profile = completeCase(get().profile, chapter.completion.caseId, chapter.completion.memory, createArchive(completed, chapter.completion.archive));
-          set({ profile }); await saveProfile(profile);
-        }
-        set({ persistenceStatus: "healthy" });
       } catch {
-        set({ persistenceStatus: "degraded" });
+        persistenceFailed = true;
       }
+
+      let profile = get().profile;
+      let shouldPersistProfile = current.persistenceStatus === "degraded";
+      if (completed.currentNodeId === "CASE_COMPLETE" && chapter.completion) {
+        profile = completeCase(profile, chapter.completion.caseId, chapter.completion.memory, createArchive(completed, chapter.completion.archive));
+        set({ profile });
+        shouldPersistProfile = true;
+      }
+
+      if (shouldPersistProfile) {
+        try {
+          await saveProfile(profile);
+        } catch {
+          persistenceFailed = true;
+        }
+      }
+
+      set({ persistenceStatus: persistenceFailed ? "degraded" : "healthy" });
     } catch (error) {
       set({ persistenceStatus: current.persistenceStatus });
       throw error;
@@ -84,7 +99,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     await clearActiveRun().catch(() => undefined);
     const timestamp = Date.now();
     const base: GameState = { runId: crypto.randomUUID(), chapterId: chapter.id, currentNodeId: chapter.startNodeId, player, patients: structuredClone(chapter.initial?.patients ?? {}), flags: { ...(chapter.initial?.flags ?? {}) }, values: {}, time: chapter.initial?.time ?? 0, resonance: zeroResonance(), rngState: seed >>> 0, checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp };
-    const activeRun = enterNode(base, chapter, chapter.startNodeId, timestamp); set({ activeRun });
-    await saveActiveRun(activeRun).catch(() => set({ persistenceStatus: "degraded" }));
+    const activeRun = enterNode(base, chapter, chapter.startNodeId, timestamp);
+    set({ activeRun });
+
+    const results = await Promise.allSettled([saveActiveRun(activeRun), saveProfile(get().profile)]);
+    set({ persistenceStatus: results.some(({ status }) => status === "rejected") ? "degraded" : "healthy" });
   },
 }));
