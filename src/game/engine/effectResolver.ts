@@ -7,12 +7,17 @@ export function applyEffect(state: GameState, effect: Effect): GameState {
   if (effect.type === "conditional") return evaluateConditions(effect.conditions, state) ? applyEffects(state, effect.effects) : state;
   if (effect.type === "flag") return { ...state, flags: { ...state.flags, [effect.key]: effect.value } };
   if (effect.type === "value") return { ...state, values: { ...state.values, [effect.key]: effect.value } };
+  if (effect.type === "valueIncrement") {
+    const current = state.values[effect.key];
+    return { ...state, values: { ...state.values, [effect.key]: (typeof current === "number" ? current : 0) + effect.amount } };
+  }
   if (effect.type === "increment") return {
     ...state,
     player: { ...state.player, abilities: { ...state.player.abilities, [effect.ability]: state.player.abilities[effect.ability] + effect.amount } },
   };
   if (effect.type === "time") return { ...state, time: state.time + effect.amount };
   if (effect.type === "setTime") return { ...state, time: effect.value };
+  if (effect.type === "advanceToTime") return { ...state, time: Math.max(state.time, effect.value) };
   if (effect.type === "resonance") return { ...state, resonance: { ...state.resonance, [effect.ability]: state.resonance[effect.ability] + effect.amount } };
 
   const patient = state.patients[effect.patientId];

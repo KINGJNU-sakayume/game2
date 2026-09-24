@@ -40,7 +40,7 @@ export type Condition =
   | { type: "all"; conditions: Condition[] }
   | { type: "any"; conditions: Condition[] }
   | { type: "flagCount"; keys: string[]; operator?: ComparisonOperator; value: number }
-  | { type: "value"; key: string; value: string | number | boolean };
+  | { type: "value"; key: string; value: string | number | boolean; operator?: ComparisonOperator };
 
 export type ComparisonOperator = "eq" | "neq" | "gt" | "gte" | "lt" | "lte";
 
@@ -50,12 +50,14 @@ export type Effect =
   | { type: "trust"; patientId: string; amount: number }
   | { type: "time"; amount: number }
   | { type: "setTime"; value: number }
+  | { type: "advanceToTime"; value: number }
   | { type: "clue"; patientId: string; clueId: string; remove?: boolean }
   | { type: "diagnosis"; patientId: string; diagnosisId: string; remove?: boolean }
   | { type: "test"; patientId: string; testId: string; status: PatientState["tests"][string] }
   | { type: "disease"; patientId: string; stage: DiseaseStage }
   | { type: "resonance"; ability: AbilityName; amount: number }
   | { type: "value"; key: string; value: string | number | boolean }
+  | { type: "valueIncrement"; key: string; amount: number }
   | { type: "conditional"; conditions: Condition[]; effects: Effect[] };
 
 export interface ActiveCheck {

@@ -25,4 +25,23 @@ describe("active run persistence", () => {
     expect(restored?.patients.harin.clues).toEqual(["constipation"]);
     expect(restored?.checkResults).toEqual(savedState.checkResults);
   });
+
+  it("round-trips Chapter 1 field and diagnostic progress", async () => {
+    const fieldState: GameState = {
+      ...savedState,
+      currentNodeId: "TEST_PORPH_01",
+      flags: { visited_apartment: true, field_overstay: true, pbg_ordered: true },
+      values: { field_locations_visited: 3, primary_diagnosis: "acute_hepatic_porphyria" },
+      patients: { harin: { ...savedState.patients.harin, trust: 29, clues: ["rapid_weight_loss", "autonomic_instability"], tests: { urine_pbg_ala: "pending" } } },
+    };
+    await saveActiveRun(fieldState);
+    const restored = await loadActiveRun();
+    expect(restored).toMatchObject({
+      currentNodeId: "TEST_PORPH_01", rngState: 9876,
+      flags: { visited_apartment: true, field_overstay: true, pbg_ordered: true },
+      values: { field_locations_visited: 3, primary_diagnosis: "acute_hepatic_porphyria" },
+      patients: { harin: { trust: 29, clues: ["rapid_weight_loss", "autonomic_instability"], tests: { urine_pbg_ala: "pending" } } },
+    });
+    expect(restored?.checkResults).toEqual(savedState.checkResults);
+  });
 });
