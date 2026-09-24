@@ -1,17 +1,18 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { evaluateConditions } from "@/game/engine/conditionResolver";
 import { getAvailableChoices } from "@/game/engine/nodeResolver";
 import { useGameStore } from "@/game/state/gameStore";
 import type { ChapterDefinition, PlayerState } from "@/game/types";
 import { formatGameTime } from "@/game/abilities";
-import { createChapter01Archive } from "@/game/engine/endingResolver";
+import { createArchive } from "@/game/engine/endingResolver";
 import { CaseButton } from "@/components/case/CaseButton"; import { CaseSheet } from "@/components/case/CaseSheet";
 import { selectReflectionBlocks } from "@/game/presentation/selectReflectionBlocks";
 import { ChoiceList } from "./ChoiceList"; import { NarrativeFeed } from "./NarrativeFeed"; import { GameShell } from "./GameShell"; import { SceneHeader } from "./SceneHeader"; import { SceneMedia } from "./SceneMedia"; import { ClinicalStrip } from "./ClinicalStrip"; import { CaseArchiveView } from "./CaseArchiveView";
 
 export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition; player: PlayerState }) {
   const store=useGameStore(); const { activeRun,hydrated,inputLocked,hydrate,initialize,choose,enter,restart }=store; const [caseOpen,setCaseOpen]=useState(false); const articleRef=useRef<HTMLElement>(null);
+  const openCase=useCallback(()=>setCaseOpen(true),[]); const closeCase=useCallback(()=>setCaseOpen(false),[]);
   useEffect(()=>{void hydrate();},[hydrate]); useEffect(()=>{if(hydrated&&!activeRun)initialize(chapter,player);},[activeRun,chapter,hydrated,initialize,player]);
   const node=activeRun?chapter.nodes[activeRun.currentNodeId]:undefined; const autoAdvanceMs=node?.presentation?.autoAdvanceMs; const autoNext=node?.autoNext;
   useEffect(()=>{if(!autoNext||autoAdvanceMs===undefined||caseOpen)return;const timer=window.setTimeout(()=>enter(chapter,autoNext),autoAdvanceMs);return()=>window.clearTimeout(timer);},[autoAdvanceMs,autoNext,caseOpen,chapter,enter]);
@@ -20,7 +21,7 @@ export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition;
   const visibleBlocks=node.blocks.filter(block=>evaluateConditions(block.conditions,activeRun)); const blocks=node.id==="REFLECTION"?selectReflectionBlocks(visibleBlocks,activeRun):visibleBlocks; const presentation=node.presentation; const immersive=presentation?.mode==="immersive"; const showCase=!immersive&&!presentation?.hideCase;
   return <GameShell immersive={immersive} hasCase={showCase}>
     {!immersive&&<SceneHeader time={presentation?.hideTime?undefined:presentation?.timeLabel??formatGameTime(activeRun.time)} location={presentation?.location}/>}<SceneMedia imageKey={presentation?.imageKey}/>
-    <article ref={articleRef} className="scene-content" aria-labelledby={node.title?"scene-title":undefined}>{node.title&&<h1 id="scene-title">{node.title}</h1>}<ClinicalStrip data={presentation?.hideVitals?undefined:presentation?.clinicalData}/><NarrativeFeed blocks={blocks}/>{node.id==="CASE_ARCHIVE"&&<CaseArchiveView archive={createChapter01Archive(activeRun)}/>}<ChoiceList choices={getAvailableChoices(node,activeRun)} disabled={inputLocked} onChoose={id=>id==="restart"?void restart(chapter,player):void choose(chapter,id)}/></article>
-    <footer>AFTER THE RAIN</footer>{showCase&&<CaseButton onClick={()=>setCaseOpen(true)}/>}<CaseSheet open={caseOpen} onClose={()=>setCaseOpen(false)} chapter={chapter} state={activeRun} onPrimary={store.setPrimaryDiagnosis} onMove={store.moveDiagnosis} onLink={store.toggleLinkedClue}/>
+    <article ref={articleRef} className="scene-content" aria-labelledby={node.title?"scene-title":undefined}>{node.title&&<h1 id="scene-title">{node.title}</h1>}<ClinicalStrip data={presentation?.hideVitals?undefined:presentation?.clinicalData}/><NarrativeFeed blocks={blocks}/>{node.id==="CASE_ARCHIVE"&&chapter.completion&&<CaseArchiveView archive={createArchive(activeRun,chapter.completion.archive)}/>}<ChoiceList choices={getAvailableChoices(node,activeRun)} disabled={inputLocked} onChoose={id=>id==="restart"?void restart(chapter,player):void choose(chapter,id)}/></article>
+    <footer>AFTER THE RAIN</footer>{showCase&&<CaseButton onClick={openCase}/>}<CaseSheet open={caseOpen} onClose={closeCase} chapter={chapter} state={activeRun} onPrimary={store.setPrimaryDiagnosis} onMove={store.moveDiagnosis} onLink={store.toggleLinkedClue}/>
   </GameShell>;
 }
