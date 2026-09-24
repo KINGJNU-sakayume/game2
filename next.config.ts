@@ -8,6 +8,7 @@ const basePath = isProduction ? "/game2" : "";
 const nextConfig: NextConfig = {
   output: "export",
   basePath,
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
   // A trailing slash lets Pages resolve routes to their exported index.html files.
   trailingSlash: true,
   // Pages cannot run Next.js' on-demand image optimizer.

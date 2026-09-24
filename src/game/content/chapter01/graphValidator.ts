@@ -1,4 +1,34 @@
-import type { ChapterDefinition } from "@/game/types";
+import type { ChapterDefinition, StoryNode, VisualAspectRatio, VisualAssetKind } from "@/game/types";
+
+export function assembleNodeSources(...sources: ReadonlyArray<Record<string, StoryNode>>): Record<string, StoryNode> {
+  const nodes: Record<string, StoryNode> = {};
+  for (const source of sources) for (const [key, node] of Object.entries(source)) {
+    if (nodes[key]) throw new Error(`Duplicate node ID during chapter assembly: ${key}`);
+    if (key !== node.id) throw new Error(`Node key/id mismatch: ${key}/${node.id}`);
+    nodes[key] = node;
+  }
+  return nodes;
+}
+
+const kinds = new Set<VisualAssetKind>(["cinematic", "scene", "evidence"]);
+const ratios = new Set<VisualAspectRatio>(["9:16", "16:9", "4:3", "1:1"]);
+export function validateVisualAssets(chapter: ChapterDefinition, requiredGameIds: readonly string[] = []): string[] {
+  const errors: string[] = []; const assets = chapter.visualAssets ?? {};
+  for (const [key, asset] of Object.entries(assets)) {
+    if (key !== asset.id) errors.push(`Asset key/id mismatch: ${key}/${asset.id}`);
+    if (!kinds.has(asset.kind)) errors.push(`Invalid asset kind: ${asset.id}`);
+    if (!ratios.has(asset.aspectRatio)) errors.push(`Invalid aspect ratio: ${asset.id}`);
+    if (!/^assets\/[\w/-]+\.webp$/.test(asset.src)) errors.push(`Invalid asset src: ${asset.id}`);
+  }
+  for (const id of requiredGameIds) if (!assets[id] || assets[id].referenceOnly) errors.push(`Missing canonical game asset: ${id}`);
+  if (!assets.CHR_HARIN_MASTER_01?.referenceOnly) errors.push("CHR_HARIN_MASTER_01 must be reference-only");
+  for (const node of Object.values(chapter.nodes)) {
+    const id = node.presentation?.assetId; if (!id) continue;
+    if (!assets[id]) errors.push(`Missing asset ${id} from ${node.id}`);
+    else if (assets[id].referenceOnly) errors.push(`Reference-only asset used by ${node.id}: ${id}`);
+  }
+  return errors;
+}
 
 export function validateChapterGraph(chapter: ChapterDefinition, checkpoints: readonly string[] = []): string[] {
   const errors: string[] = [];

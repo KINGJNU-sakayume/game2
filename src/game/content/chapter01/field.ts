@@ -34,30 +34,30 @@ export const fieldNodes: Record<string, StoryNode> = {
   FIELD_OVERSTAY_FAM_001: { id: "FIELD_OVERSTAY_FAM_001", blocks: [thought("decision", "환자는 병원에 있다.\n\n정보가 더 필요한가,\n네가 더 필요한가?")], choices: [{ id: "continue-overstay", label: "그래도 가족에게 연락한다", effects: [setFlag("field_overstay"), { type: "time", amount: 15 }], next: "FAM_001" }, { id: "return", label: "병원으로 돌아간다", next: "DET_001" }] },
   FIELD_OVERSTAY_HOSP_EXTRA_001: { id: "FIELD_OVERSTAY_HOSP_EXTRA_001", blocks: [thought("decision", "환자는 병원에 있다.\n\n정보가 더 필요한가,\n네가 더 필요한가?")], choices: [{ id: "continue-overstay", label: "그래도 추가 확인한다", effects: [setFlag("field_overstay"), { type: "time", amount: 15 }], next: "HOSP_EXTRA_001" }, { id: "return", label: "환자에게 돌아간다", next: "DET_001" }] },
 
-  APT_001: { id: "APT_001", title: "윤하린의 원룸", blocks: [p("윤하린의 작은 원룸.\n\n정돈되어 있지만 생활 흔적은 있다.")], choices: [
+  APT_001: { id: "APT_001", presentation: { assetId: "SCN_003_APARTMENT" }, title: "윤하린의 원룸", blocks: [p("윤하린의 작은 원룸.\n\n정돈되어 있지만 생활 흔적은 있다.")], choices: [
     { id: "fridge", label: "냉장고를 확인한다", conditions: hotspot("apt_fridge_complete"), next: "APT_FRIDGE" },
     { id: "vanity", label: "화장대를 살핀다", conditions: hotspot("apt_vanity_complete"), next: "APT_VANITY" },
     { id: "desk", label: "책상을 확인한다", conditions: hotspot("apt_desk_complete"), next: "APT_DESK" },
     { id: "exit", label: "조사를 마친다", next: "APT_EXIT" },
   ] },
-  APT_FRIDGE: { id: "APT_FRIDGE", blocks: [p("냉장고 안.\n\n탄산수.\n저지방 요거트 두 개.\n달걀.\n병커피.\n\n제대로 된 식사 재료가 거의 없다."), thought("observation", "며칠 비운 냉장고가 아니다.", 2), thought("mechanism", "탄수화물이 거의 없다.", 3)], onEnter: [{ type: "time", amount: 6 }, mark("apt_fridge_complete"), setFlag("restricted_diet_known"), clue("severe_caloric_restriction")], choices: go("APT_001") },
-  APT_VANITY: { id: "APT_VANITY", blocks: [
+  APT_FRIDGE: { id: "APT_FRIDGE", presentation: { assetId: "EVD_002_FRIDGE" }, blocks: [p("냉장고 안.\n\n탄산수.\n저지방 요거트 두 개.\n달걀.\n병커피.\n\n제대로 된 식사 재료가 거의 없다."), thought("observation", "며칠 비운 냉장고가 아니다.", 2), thought("mechanism", "탄수화물이 거의 없다.", 3)], onEnter: [{ type: "time", amount: 6 }, mark("apt_fridge_complete"), setFlag("restricted_diet_known"), clue("severe_caloric_restriction")], choices: go("APT_001") },
+  APT_VANITY: { id: "APT_VANITY", presentation: { assetId: "EVD_004_OCP" }, blocks: [
     p("화장대.\n\n화장품.\n비타민.\n진통제.\n\n그리고 작은 약 포장."),
     p("경구피임약 blister pack.", [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }]),
     { type: "thought", ability: "mechanism", text: "호르몬.", conditions: [ability("mechanism", 4), flag("ocp_known")] },
     { type: "thought", ability: "mechanism", text: "저열량.\n\n둘을 같이 기억해.", conditions: [ability("mechanism", 4), flag("ocp_known"), flag("restricted_diet_known")] },
   ], onEnter: [{ type: "time", amount: 8 }, mark("apt_vanity_complete"), { type: "conditional", conditions: [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }], effects: [setFlag("ocp_known"), clue("recent_hormonal_medication")] }], choices: go("APT_001") },
-  APT_DESK: { id: "APT_DESK", blocks: [p("수첩.\n\nD-10  51.2\nD-8   50.4\nD-5   49.8\nD-3   49.1"), thought("observation", "짧은 시간이다."), thought("empathy", "‘조금 줄였다’는 말과\n이 숫자는 다르다.", 3)], onEnter: [{ type: "time", amount: 5 }, mark("apt_desk_complete"), setFlag("restricted_diet_known"), clue("rapid_weight_loss")], choices: go("APT_001") },
+  APT_DESK: { id: "APT_DESK", presentation: { assetId: "EVD_003_WEIGHT_NOTEBOOK" }, blocks: [p("체중 변화가 적힌 수첩."), thought("observation", "짧은 시간이다."), thought("empathy", "‘조금 줄였다’는 말과\n이 숫자는 다르다.", 3)], onEnter: [{ type: "time", amount: 5 }, mark("apt_desk_complete"), setFlag("restricted_diet_known"), clue("rapid_weight_loss")], choices: go("APT_001") },
   APT_EXIT: { id: "APT_EXIT", blocks: [{ ...thought("reasoning", "발작 직전에 달라진 것들이 있다.\n\n식사.\n\n호르몬."), conditions: [flag("restricted_diet_known"), flag("ocp_known")] }], onEnter: [setFlag("visited_apartment"), ...incrementLocation], choices: go("FIELD_RETURN") },
 
-  REH_001: { id: "REH_001", title: "밤의 연습실", blocks: [p("밤의 텅 빈 연습실.\n정세영이 기다린다."), d("정세영", "“뭐가 문제래요?”"), d("플레이어", "“아직 찾는 중입니다.”"), d("정세영", "“역시.”")], choices: [
+  REH_001: { id: "REH_001", presentation: { assetId: "SCN_004_REHEARSAL_EMPTY" }, title: "밤의 연습실", blocks: [p("밤의 텅 빈 연습실.\n정세영이 기다린다."), d("정세영", "“뭐가 문제래요?”"), d("플레이어", "“아직 찾는 중입니다.”"), d("정세영", "“역시.”")], choices: [
     { id: "previous", label: "“역시?”", conditions: available("reh_prev_complete"), next: "REH_PREV" }, { id: "diet", label: "최근 식사 상태를 묻는다", conditions: available("reh_diet_complete"), next: "REH_DIET" },
     { id: "motor", label: "최근 힘이 빠지거나 이상했던 일이 있는지 묻는다", conditions: available("reh_motor_complete"), next: "REH_MOTOR" }, { id: "environment", label: "연습실 환경을 확인한다", conditions: available("reh_env_complete"), next: "REH_ENV" },
     { id: "ocp", label: "최근 새로 먹기 시작한 약이 있었는지 묻는다", conditions: [flag("reh_ocp_complete", false), { type: "any", conditions: [ability("empathy", 4), flag("restricted_diet_known"), flag("medication_incomplete")] }], next: "REH_OCP" }, { id: "exit", label: "조사를 마친다", next: "REH_EXIT" },
   ] },
   REH_PREV: { id: "REH_PREV", blocks: [d("정세영", "“작년에도 비슷했어요.\n\n배 아프다고 하고.\n\n잠 못 자고.\n\n되게 예민해지고.”")], onEnter: [mark("reh_prev_complete"), setFlag("previous_attacks_known"), clue("previous_attacks")], choices: go("REH_001") },
   REH_DIET: { id: "REH_DIET", blocks: [d("정세영", "“요즘 거의 안 먹었어요.\n커피만 마시는 날도 있었고.”"), d("플레이어", "“누가 체중 감량을 요구했습니까?”"), d("정세영", "“아뇨. 그렇게 단순한 건 아니에요.\n이번 공연 끝나면 중요한 오디션이 있어서…”"), thought("empathy", "강요받지 않았다는 것과\n압박이 없었다는 것은 다른 말이다.", 3)], onEnter: [mark("reh_diet_complete"), setFlag("restricted_diet_known"), clue("severe_caloric_restriction")], choices: go("REH_001") },
-  REH_MOTOR: { id: "REH_MOTOR", blocks: [d("정세영", "“아. 며칠 전에 물병을 못 열었어요.”"), d("플레이어", "“왜요?”"), d("정세영", "“손에 힘이 안 들어간다고.”"), thought("reasoning", "복통보다 먼저.")], onEnter: [mark("reh_motor_complete"), setFlag("early_weakness_known"), clue("preexisting_motor_weakness")], choices: go("REH_001") },
+  REH_MOTOR: { id: "REH_MOTOR", presentation: { assetId: "EVD_005_WATER_BOTTLE" }, blocks: [d("정세영", "“아. 며칠 전에 물병을 못 열었어요.”"), d("플레이어", "“왜요?”"), d("정세영", "“손에 힘이 안 들어간다고.”"), thought("reasoning", "복통보다 먼저.")], onEnter: [mark("reh_motor_complete"), setFlag("early_weakness_known"), clue("preexisting_motor_weakness")], choices: go("REH_001") },
   REH_ENV: { id: "REH_ENV", blocks: [p("낡은 연습실 일부에 공사 흔적."), thought("suspicion", "오래된 페인트.", 3), thought("mechanism", "납?", 3)], onEnter: [
     mark("reh_env_complete"),
     { type: "conditional", conditions: [ability("mechanism", 3)], effects: [setFlag("lead_poisoning_available"), { type: "diagnosis", patientId: "harin", diagnosisId: "lead_poisoning" }] },

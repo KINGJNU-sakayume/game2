@@ -44,7 +44,7 @@ export const hospitalChapter: ChapterDefinition = {
       { type: "prose", text: "완전한 검정." }, { type: "prose", text: "멀리서 피아노 한 음이 들린다." },
       { type: "dialogue", speaker: "무대감독", text: "“다시 갈게요. 47마디부터.”" },
     ], choices: [{ id: "tap", label: "화면 탭", next: "PR_002" }] },
-    PR_002: { id: "PR_002", presentation: { mode: "cinematic", hideCase: true, imageKey: "rehearsal" }, blocks: [
+    PR_002: { id: "PR_002", presentation: { mode: "cinematic", hideCase: true, assetId: "CIN_001_REHEARSAL" }, blocks: [
       { type: "prose", text: "조명이 켜진다." }, { type: "prose", text: "앙상블 배우들이 빈 객석을 향해 군무를 반복한다." },
       { type: "prose", text: "윤하린은 그중 한 명이다." }, { type: "prose", text: "박자." }, { type: "prose", text: "한 번." },
       { type: "prose", text: "두 번." }, { type: "prose", text: "오른손이 잠깐 배로 내려간다." }, { type: "prose", text: "다시 원래 자세." },
@@ -55,7 +55,7 @@ export const hospitalChapter: ChapterDefinition = {
       { type: "prose", text: "피아노가 계속된다." }, { type: "prose", text: "하린이 다시 움직인다." },
       { type: "prose", text: "이번에는 두 걸음 만에 멈춘다." }, { type: "prose", text: "숨을 깊게 들이마신다." },
     ], choices: continueTo("PR_004") },
-    PR_004: { id: "PR_004", blocks: [
+    PR_004: { id: "PR_004", presentation: { mode: "cinematic", hideCase: true, assetId: "CIN_002_COLLAPSE" }, blocks: [
       { type: "prose", text: "하린의 무릎이 꺾인다." }, { type: "prose", text: "무대 바닥." },
       { type: "dialogue", speaker: "세영", text: "“하린아?”" }, { type: "dialogue", speaker: "하린", text: "“잠깐만…”" },
       { type: "dialogue", speaker: "세영", text: "“119 부를게.”" }, { type: "dialogue", speaker: "하린", text: "“아니. 괜찮—”" },
@@ -67,7 +67,7 @@ export const hospitalChapter: ChapterDefinition = {
       { type: "dialogue", speaker: "목소리", text: "“복통이 굉장히 심한데… 지금까지 설명이 잘 안 됩니다.”" },
     ], choices: continueTo("PR_006") },
     PR_006: { id: "PR_006", title: "CHAPTER 1\n\n아무것도 없는 배", presentation: { mode: "immersive", hideTime: true, hideCase: true, autoAdvanceMs: 1500 }, blocks: [], autoNext: "ER_001" },
-    ER_001: { id: "ER_001", title: "19:55 응급실", presentation: { imageKey: "erInitial", timeLabel: "19:55", location: "응급실 07", clinicalData: [{ label: "HR", value: "118" }, { label: "BP", value: "168/102", tone: "warning" }, { label: "T", value: "36.7" }] }, onEnter: [{ type: "setTime", value: 1195 }, { type: "timeline", entry: { id: "arrival", time: 1195, kind: "clinical", text: "응급실 도착" } }], blocks: [
+    ER_001: { id: "ER_001", title: "19:55 응급실", presentation: { assetId: "SCN_001_ER_INITIAL", timeLabel: "19:55", location: "응급실 07", clinicalData: [{ label: "HR", value: "118" }, { label: "BP", value: "168/102", tone: "warning" }, { label: "T", value: "36.7" }] }, onEnter: [{ type: "setTime", value: 1195 }, { type: "timeline", entry: { id: "arrival", time: 1195, kind: "clinical", text: "응급실 도착" } }], blocks: [
       { type: "system", text: "HR 118\nBP 168/102\nT 36.7" }, { type: "dialogue", speaker: "강수진", text: "“리허설 도중 쓰러졌습니다.”" },
       { type: "dialogue", speaker: "강수진", text: "“복통 9점.”" }, { type: "dialogue", speaker: "강수진", text: "“구토 한 번.”" },
       { type: "dialogue", speaker: "강수진", text: "“임신반응은 음성입니다.”" }, { type: "prose", text: "하린은 몸을 약간 웅크린 채 플레이어를 본다." },
@@ -134,9 +134,9 @@ export const hospitalChapter: ChapterDefinition = {
     HIST_003: { id: "HIST_003", blocks: [d("플레이어", "“CT는 위험한 몇 가지 병의 가능성을 낮춰줬습니다.”"), d("플레이어", "“통증의 원인이 없다는 뜻은 아닙니다.”"), d("윤하린", "“그럼 계속 보는 거예요?”"), d("플레이어", "“네.”")], onEnter: [{ type: "trust", patientId: "harin", amount: 5 }], choices: go("HIST_001") },
     CASE_001: { id: "CASE_001", title: "Case Conference", presentation: { mode: "cinematic" }, blocks: [s("심한 비국소성 복통\n복막자극징후 없음\n변비\n빈맥\n고혈압\nNa 128\n정상 CT"), s("반복된 과거 발작", [{ type: "flag", key: "previous_attacks_known" }]), thought("reasoning", "다시 분류한다."), p("급성 복부 질환\n독성/약물\n내분비/자율신경\n기능성/정신과적\n신경학적"), thought("mechanism", "하나의 장기에서 시작한 그림이 아닐 수도 있다.", 4)], choices: anchors.map(([id,label]) => ({ id, label, effects: [{ type: "value" as const, key: "initial_anchor", value: id }], next: "ER_006" })) },
     ER_006: { id: "ER_006", presentation: { timeLabel: "21:46", clinicalData: [{ label: "Na", value: "124", tone: "warning" }] }, blocks: [d("강수진", "“선생님, 다시 전해질 나왔습니다.”"), s("Na 124"), d("플레이어", "“128에서?”"), d("강수진", "“네.”"), d("강수진", "“그리고 화장실 갔다 오다가 주저앉았어요.”")], onEnter: [{ type: "setTime", value: 1306 }, { type: "timeline", entry: { id: "na124", time: 1306, kind: "clinical", text: "Na 124" } }, { type: "disease", patientId: "harin", stage: "progressing" }], choices: go("ER_007") },
-    ER_007: { id: "ER_007", blocks: [d("윤하린", "“다리에 쥐가 난 거예요.”"), p("근위부 하지 근력 경도 저하.\n손 떨림.\n감각 이상 뚜렷하지 않음."), { type: "thought", ability: "observation", text: "처음부터 조금씩 있었다.", conditions: [ability("observation",3), { type: "flag", key: "early_motor_hint" }] }], onEnter: [clue("proximal_weakness"), clue("fine_tremor"), clue("progressive_hyponatremia"), { type: "conditional", conditions: [ability("observation",3), { type: "flag", key: "early_motor_hint" }], effects: [{ type: "flag", key: "early_weakness_known", value: true }] }], choices: go("ER_008") },
+    ER_007: { id: "ER_007", presentation: { assetId: "SCN_002_ER_WEAKNESS" }, blocks: [d("윤하린", "“다리에 쥐가 난 거예요.”"), p("근위부 하지 근력 경도 저하.\n손 떨림.\n감각 이상 뚜렷하지 않음."), { type: "thought", ability: "observation", text: "처음부터 조금씩 있었다.", conditions: [ability("observation",3), { type: "flag", key: "early_motor_hint" }] }], onEnter: [clue("proximal_weakness"), clue("fine_tremor"), clue("progressive_hyponatremia"), { type: "conditional", conditions: [ability("observation",3), { type: "flag", key: "early_motor_hint" }], effects: [{ type: "flag", key: "early_weakness_known", value: true }] }], choices: go("ER_008") },
     ER_008: { id: "ER_008", blocks: [s("serum osmolality low\nurine osmolality inappropriately concentrated"), thought("mechanism", "물을 버려야 하는데 붙잡고 있다.", 3), thought("reasoning", "SIADH 형태."), thought("mechanism", "질문을 바꿔."), thought("mechanism", "왜 복통 환자가 이걸 만들지?")], onEnter: [clue("siadh_pattern")], choices: go("URINE_001") },
-    URINE_001: { id: "URINE_001", blocks: [p("검체가 간호 스테이션에 있다."), thought("observation", "색.", 4), d("플레이어", "“이거 아까보다 진해졌습니까?”", [ability("observation",4)]), d("강수진", "“그런 것 같기도 하고요.”", [ability("observation",4)]), { type: "thought", ability: "reasoning", text: "농축됐을 수도 있다.", conditions: [ability("observation",4)] }, { type: "thought", ability: "observation", text: "그래서 기록만.", conditions: [ability("observation",4)] }], onEnter: [{ type: "conditional", conditions: [ability("observation",4)], effects: [{ type: "flag", key: "urine_color_known", value: true }] }], choices: go("ER_009") },
+    URINE_001: { id: "URINE_001", presentation: { assetId: "EVD_001_URINE" }, blocks: [p("검체가 간호 스테이션에 있다."), thought("observation", "색.", 4), d("플레이어", "“이거 아까보다 진해졌습니까?”", [ability("observation",4)]), d("강수진", "“그런 것 같기도 하고요.”", [ability("observation",4)]), { type: "thought", ability: "reasoning", text: "농축됐을 수도 있다.", conditions: [ability("observation",4)] }, { type: "thought", ability: "observation", text: "그래서 기록만.", conditions: [ability("observation",4)] }], onEnter: [{ type: "conditional", conditions: [ability("observation",4)], effects: [{ type: "flag", key: "urine_color_known", value: true }] }], choices: go("ER_009") },
     ER_009: { id: "ER_009", blocks: [d("플레이어", "“최근 식사량을 다시 확인하고 싶습니다.”"), d("윤하린", "“그게 왜 중요해요?”"), d("윤하린", "“제가 안 먹어서 이러는 거라고요?”")], choices: [
       { id: "empathy", label: "∿ 공감 — 섭식 문제로 단정하려는 게 아닙니다.", check: { id: "diet-empathy", ability: "empathy", dc: 8 }, next: { success: "EMP_SUCCESS", failure: "EMP_FAILURE" } },
       { id: "history", label: "? 문진 — 지난 7일을 날짜별로 확인하겠습니다.", check: { id: "diet-history", ability: "history", dc: 9 }, next: { success: "HIS_SUCCESS", failure: "HIS_FAILURE" } },
@@ -150,10 +150,5 @@ export const hospitalChapter: ChapterDefinition = {
     SUS_SUCCESS: checkOutcome("SUS_SUCCESS", [d("윤하린", "“제가 뭘 숨겼는데요?”"), d("플레이어", "“저도 아직 모릅니다.”"), d("윤하린", "“요즘 거의 안 먹었어요.”")], -6, true),
     SUS_FAILURE: checkOutcome("SUS_FAILURE", [d("윤하린", "“그럼 다른 의사 불러주세요.”")], -10),
     ER_010: { id: "ER_010", blocks: [d("플레이어", "“최근 열흘 사이 새로 시작한 게 정말 없습니까?”", [medGate]), d("윤하린", "“…생리 미루려고 먹는 건 있어요.”", [medGate, trust("gte",75)]), d("윤하린", "“없어요.”", [medGate, trust("lt",75)])], onEnter: [{ type: "conditional", conditions: [medGate, trust("gte",75)], effects: [{ type: "flag", key: "ocp_known", value: true }] }], choices: go("FIELD_GATE") },
-    FIELD_GATE: { id: "FIELD_GATE", title: "FIELD INVESTIGATION", blocks: [d("플레이어", "“집이나 연습실에서 최근 달라진 걸 확인하고 싶습니다.”"), d("윤하린", "“…왜요?”"), d("플레이어", "“약, 음식, 환경 노출 같은 걸 직접 확인하려고 합니다.”"), s("진료실 밖에도 병력은 있다.")], choices: [
-      { id: "apartment", label: "집을 조사한다", terminal: true, effects: [{ type: "value", key: "field_intent", value: "apartment" }] },
-      { id: "rehearsal", label: "연습실을 조사한다", terminal: true, effects: [{ type: "value", key: "field_intent", value: "rehearsal" }] },
-      { id: "family", label: "가족에게 확인한다", terminal: true, effects: [{ type: "value", key: "field_intent", value: "family" }] },
-    ] },
   },
 };
