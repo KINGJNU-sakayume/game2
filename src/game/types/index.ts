@@ -30,6 +30,24 @@ export interface TimelineEntry { id: string; time: number; kind: "clinical" | "d
 export type TimelineEffectEntry = Omit<TimelineEntry, "time"> & { time?: number };
 export interface ClinicalDatum { label: string; value: string; tone?: "default" | "warning" | "critical" }
 
+export type VisualAssetKind = "cinematic" | "scene" | "evidence";
+export type VisualAspectRatio = "9:16" | "16:9" | "4:3" | "1:1";
+export interface EvidenceOverlay {
+  lines?: string[];
+  fields?: { label?: string; value: string }[];
+}
+export interface VisualAssetDefinition {
+  id: string;
+  kind: VisualAssetKind;
+  src: string;
+  aspectRatio: VisualAspectRatio;
+  alt: string;
+  focalPoint?: { x: number; y: number };
+  continuityGroup?: string;
+  referenceOnly?: boolean;
+  overlay?: EvidenceOverlay;
+}
+
 export interface CheckResult {
   checkId: string;
   rolls: readonly [number, number];
@@ -108,7 +126,8 @@ export interface ScenePresentation {
   hideTime?: boolean;
   hideCase?: boolean;
   hideVitals?: boolean;
-  imageKey?: string;
+  /** Canonical registry ID. imageKey was prototype-only and is intentionally not persisted. */
+  assetId?: string;
   timeLabel?: string;
   location?: string;
   autoAdvanceMs?: number;
@@ -147,6 +166,7 @@ export interface ChapterDefinition {
   title: string;
   startNodeId: string;
   nodes: Record<string, StoryNode>;
+  visualAssets?: Record<string, VisualAssetDefinition>;
   initial?: {
     time?: number;
     patients?: Record<string, PatientState>;
