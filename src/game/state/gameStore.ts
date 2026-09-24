@@ -2,12 +2,14 @@
 
 import { create } from "zustand";
 import { enterNode, executeChoice } from "@/game/engine/nodeResolver";
-import type { ChapterDefinition, GameState, PlayerState } from "@/game/types";
-import { loadActiveRun, saveActiveRun } from "./saveStore";
+import type { ChapterDefinition, GameState, PersistentProfile, PlayerState } from "@/game/types";
+import { clearActiveRun, completeCase, emptyProfile, loadActiveRun, loadProfile, saveActiveRun, saveProfile } from "./saveStore";
 import { zeroResonance } from "@/game/abilities";
+import { createArchive } from "@/game/engine/endingResolver";
 
 interface GameStore {
   activeRun: GameState | null;
+  profile: PersistentProfile;
   hydrated: boolean;
   inputLocked: boolean;
   persistenceStatus: "healthy" | "saving" | "degraded";
@@ -16,12 +18,14 @@ interface GameStore {
   enter: (chapter: ChapterDefinition, nodeId: string) => void;
   choose: (chapter: ChapterDefinition, choiceId: string) => Promise<void>;
   restore: (state: GameState) => void;
+  restart: (chapter: ChapterDefinition, player: PlayerState, seed?: number) => Promise<void>;
 }
 
 let hydrationPromise: Promise<void> | undefined;
 
 export const useGameStore = create<GameStore>((set, get) => ({
   activeRun: null,
+  profile: emptyProfile(),
   hydrated: false,
   inputLocked: false,
   persistenceStatus: "healthy",
@@ -41,8 +45,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ activeRun: enterNode(base, chapter, chapter.startNodeId, timestamp) });
   },
   hydrate: async () => {
-    hydrationPromise ??= loadActiveRun()
-      .then((saved) => set((current) => ({ activeRun: saved ?? current.activeRun })))
+    hydrationPromise ??= Promise.all([loadActiveRun(), loadProfile()])
+      .then(([saved, profile]) => set((current) => ({ activeRun: saved ?? current.activeRun, profile })))
       .catch(() => undefined)
       .finally(() => set({ hydrated: true }));
     await hydrationPromise;
@@ -60,6 +64,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ activeRun: completed });
       try {
         await saveActiveRun(completed);
+        if (completed.currentNodeId === "CASE_COMPLETE" && chapter.completion) {
+          const profile = completeCase(get().profile, chapter.completion.caseId, chapter.completion.memory, createArchive(completed, chapter.completion.archive));
+          set({ profile }); await saveProfile(profile);
+        }
         set({ persistenceStatus: "healthy" });
       } catch {
         set({ persistenceStatus: "degraded" });
@@ -72,4 +80,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
   restore: (state) => set({ activeRun: state }),
+  restart: async (chapter, player, seed = Date.now()) => {
+    await clearActiveRun().catch(() => undefined);
+    const timestamp = Date.now();
+    const base: GameState = { runId: crypto.randomUUID(), chapterId: chapter.id, currentNodeId: chapter.startNodeId, player, patients: structuredClone(chapter.initial?.patients ?? {}), flags: { ...(chapter.initial?.flags ?? {}) }, values: {}, time: chapter.initial?.time ?? 0, resonance: zeroResonance(), rngState: seed >>> 0, checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp };
+    const activeRun = enterNode(base, chapter, chapter.startNodeId, timestamp); set({ activeRun });
+    await saveActiveRun(activeRun).catch(() => set({ persistenceStatus: "degraded" }));
+  },
 }));

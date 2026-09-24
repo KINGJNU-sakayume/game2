@@ -9,7 +9,12 @@ const persistence = vi.hoisted(() => ({
 
 vi.mock("./saveStore", () => ({
   loadActiveRun: persistence.load,
+  loadProfile: vi.fn().mockResolvedValue({ completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false }),
   saveActiveRun: persistence.save,
+  saveProfile: vi.fn(),
+  clearActiveRun: vi.fn(),
+  completeCase: vi.fn(),
+  emptyProfile: () => ({ completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false }),
 }));
 
 import { useGameStore } from "./gameStore";

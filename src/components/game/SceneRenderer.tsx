@@ -8,9 +8,12 @@ import type { ChapterDefinition, PlayerState } from "@/game/types";
 import { ChoiceList } from "./ChoiceList";
 import { NarrativeBlock } from "./NarrativeBlock";
 import { formatGameTime } from "@/game/abilities";
+import { createChapter01Archive } from "@/game/engine/endingResolver";
+
+const labels = { appropriate: "적절함", late: "지연됨", failed: "진단 실패", delayed: "지연됨", sufficient: "충분히 확인", partial: "일부 확인", unknown: "확인하지 못함", trusted: "신뢰 유지", guarded: "조심스러운 관계", broken: "관계 단절" } as const;
 
 export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition; player: PlayerState }) {
-  const { activeRun, hydrated, inputLocked, hydrate, initialize, choose, enter } = useGameStore();
+  const { activeRun, hydrated, inputLocked, hydrate, initialize, choose, enter, restart } = useGameStore();
   useEffect(() => { void hydrate(); }, [hydrate]);
   useEffect(() => { if (hydrated && !activeRun) initialize(chapter, player); }, [activeRun, chapter, hydrated, initialize, player]);
   const node = activeRun ? chapter.nodes[activeRun.currentNodeId] : undefined;
@@ -36,7 +39,8 @@ export function SceneRenderer({ chapter, player }: { chapter: ChapterDefinition;
         {presentation?.imageKey && <div className={`scene-image scene-image-${presentation.imageKey}`} role="img" aria-label={presentation.imageKey === "rehearsal" ? "빈 객석을 향한 무대 리허설" : "응급실 07의 진료 공간"} />}
         {node.title && <h1 id="scene-title" className="mb-8 font-serif text-3xl font-medium tracking-tight text-stone-50">{node.title}</h1>}
         {blocks.map((block, index) => <NarrativeBlock block={block} key={index} />)}
-        <ChoiceList choices={choices} disabled={inputLocked} onChoose={(id) => void choose(chapter, id)} />
+        {node.id === "CASE_ARCHIVE" && (() => { const archive = createChapter01Archive(activeRun); return <section className="my-8 space-y-3 border-y border-white/10 py-6 text-sm text-stone-300" aria-label="Case Archive outcomes"><p>진단: {labels[archive.diagnosis]}</p><p>치료: {labels[archive.treatment]}</p><p>촉발 요인: {labels[archive.trigger]}</p><p>관계: {labels[archive.relationship]}</p><p>확인한 촉발 요인: {archive.triggersDiscovered.join(", ") || "없음"}</p><p>경과: {archive.outcome}</p><p>후속: {archive.followUp}</p></section>; })()}
+        <ChoiceList choices={choices} disabled={inputLocked} onChoose={(id) => id === "restart" ? void restart(chapter, player) : void choose(chapter, id)} />
       </article>
       <footer className="mt-16 text-center text-[11px] tracking-widest text-stone-600">AFTER THE RAIN</footer>
     </main>

@@ -92,11 +92,27 @@ export interface ScenePresentation {
   mode?: "immersive" | "cinematic";
   hideTime?: boolean;
   hideCase?: boolean;
+  hideVitals?: boolean;
   imageKey?: string;
   timeLabel?: string;
   location?: string;
   autoAdvanceMs?: number;
 }
+
+export type DiagnosisOutcome = "failed" | "late" | "appropriate";
+export type TreatmentOutcome = "delayed" | "appropriate";
+export type TriggerOutcome = "unknown" | "partial" | "sufficient";
+export type RelationshipOutcome = "broken" | "guarded" | "trusted";
+export interface EndingContext { diagnosis: DiagnosisOutcome; treatment: TreatmentOutcome; trigger: TriggerOutcome; relationship: RelationshipOutcome }
+export interface EndingRule { id: string; when: Partial<EndingContext> & { triggerInsufficient?: boolean; severeDelay?: boolean } }
+export interface CaseMemory { id: string; title: string; description: string; sourceChapter: string }
+export interface CaseArchive {
+  caseId: string; title: string; finalDiagnosis: string; biochemicalDiagnosis: string; subtypeConfirmation: string;
+  diagnosis: DiagnosisOutcome; treatment: TreatmentOutcome; trigger: TriggerOutcome; relationship: RelationshipOutcome;
+  triggersDiscovered: string[]; complications: string[]; outcome: string; followUp: string; endingId: string;
+}
+export interface ArchiveDefinition { caseId: string; title: string; finalDiagnosis: string; biochemicalDiagnosis: string; subtypeConfirmation: string; complications: string[] }
+export interface PersistentProfile { completedCases: string[]; caseMemories: CaseMemory[]; archives: CaseArchive[]; firstEndingCompleted: boolean }
 
 export interface StoryNode {
   id: string;
@@ -120,6 +136,7 @@ export interface ChapterDefinition {
     patients?: Record<string, PatientState>;
     flags?: Record<string, boolean>;
   };
+  completion?: { caseId: string; memory: CaseMemory; archive: ArchiveDefinition };
 }
 
 export interface GameState {
