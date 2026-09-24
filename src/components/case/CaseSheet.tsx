@@ -1,0 +1,10 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import type { ChapterDefinition, GameState } from "@/game/types";
+import { CaseTabs, type CaseTabId } from "./CaseTabs";
+export function CaseSheet({ open, onClose, chapter, state, onPrimary, onMove, onLink }: { open:boolean; onClose:()=>void; chapter:ChapterDefinition; state:GameState; onPrimary:(id:string)=>void; onMove:(id:string,direction:-1|1)=>void; onLink:(diagnosisId:string,clueId:string)=>void }) {
+  const [tab,setTab]=useState<CaseTabId>("clues"); const closeRef=useRef<HTMLButtonElement>(null); const dialogRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{ if(!open)return; const previous=document.activeElement as HTMLElement|null; document.body.classList.add("sheet-open"); closeRef.current?.focus(); const key=(event:KeyboardEvent)=>{ if(event.key==="Escape") onClose(); if(event.key==="Tab"&&dialogRef.current){const focusable=[...dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]),[tabindex="0"]')]; if(!focusable.length)return; const first=focusable[0],last=focusable.at(-1)!; if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}}; document.addEventListener("keydown",key); return()=>{document.body.classList.remove("sheet-open");document.removeEventListener("keydown",key);previous?.focus();};},[open,onClose]);
+  if(!open)return null;
+  return <div className="case-overlay" onMouseDown={event=>{if(event.target===event.currentTarget)onClose();}}><div className="case-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="case-title"><div className="sheet-handle" aria-hidden="true"/><header><div><p>ACTIVE RECORD</p><h2 id="case-title">{chapter.completion?.archive.caseId ?? chapter.title}</h2></div><button ref={closeRef} className="sheet-close" onClick={onClose} aria-label="CASE 닫기">닫기</button></header><CaseTabs active={tab} onChange={setTab} chapter={chapter} state={state} onPrimary={onPrimary} onMove={onMove} onLink={onLink}/></div></div>;
+}

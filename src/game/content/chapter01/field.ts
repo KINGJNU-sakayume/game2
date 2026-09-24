@@ -14,7 +14,7 @@ const overstayChoice = (id: string, label: string, destination: string, extra: C
 });
 
 export const fieldNodes: Record<string, StoryNode> = {
-  FIELD_GATE: { id: "FIELD_GATE", title: "FIELD INVESTIGATION", presentation: { timeLabel: "22:08" }, onEnter: [{ type: "advanceToTime", value: 1328 }], blocks: [
+  FIELD_GATE: { id: "FIELD_GATE", title: "FIELD INVESTIGATION", presentation: { timeLabel: "22:08" }, onEnter: [{ type: "advanceToTime", value: 1328 }, { type: "timeline", entry: { id: "field-start", kind: "field", text: "Field investigation 시작" } }], blocks: [
     d("플레이어", "“집이나 연습실에서 최근 달라진 걸 확인하고 싶습니다.”"), d("윤하린", "“집까지요?”"),
     d("플레이어", "“약, 음식, 환경 노출 같은 걸 직접 확인하고 싶습니다.”"),
     d("윤하린", "“세영이한테 연락하세요. 비밀번호도 알려줄게요.”", [{ type: "trust", patientId: "harin", operator: "gte", value: 55 }]),

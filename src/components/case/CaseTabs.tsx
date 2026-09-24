@@ -1,0 +1,7 @@
+import type { ChapterDefinition, GameState } from "@/game/types";
+import { ClueTab } from "./ClueTab"; import { DifferentialTab } from "./DifferentialTab"; import { TestsTab } from "./TestsTab"; import { TimelineTab } from "./TimelineTab";
+export type CaseTabId = "clues" | "ddx" | "tests" | "time";
+const tabs: {id: CaseTabId; label:string}[] = [{id:"clues",label:"CLUES"},{id:"ddx",label:"DDx"},{id:"tests",label:"TESTS"},{id:"time",label:"TIME"}];
+export function CaseTabs({ active, onChange, chapter, state, onPrimary, onMove, onLink }: { active:CaseTabId; onChange:(id:CaseTabId)=>void; chapter:ChapterDefinition; state:GameState; onPrimary:(id:string)=>void; onMove:(id:string,direction:-1|1)=>void; onLink:(diagnosisId:string,clueId:string)=>void }) {
+  return <><div className="case-tabs" role="tablist" aria-label="환자 기록">{tabs.map(tab => <button key={tab.id} id={`tab-${tab.id}`} role="tab" aria-selected={active===tab.id} aria-controls={`panel-${tab.id}`} onClick={()=>onChange(tab.id)}>{tab.label}</button>)}</div><div role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} tabIndex={0}>{active==="clues"?<ClueTab chapter={chapter} state={state}/>:active==="ddx"?<DifferentialTab chapter={chapter} state={state} onPrimary={onPrimary} onMove={onMove} onLink={onLink}/>:active==="tests"?<TestsTab chapter={chapter} state={state}/>:<TimelineTab state={state}/>}</div></>;
+}

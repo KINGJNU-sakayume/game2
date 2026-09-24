@@ -17,6 +17,19 @@ export interface PatientState {
   tests: Record<string, "ordered" | "pending" | "complete" | "positive" | "negative">;
 }
 
+export type ClueCategory = "clinical" | "lab" | "history" | "environment";
+export interface ClueDefinition { id: string; title: string; description?: string; category: ClueCategory; tags?: string[] }
+export interface DiagnosisRule { text: string; conditions?: Condition[] }
+export interface DiagnosisDefinition {
+  id: string; nameKo: string; nameEn?: string; category?: string;
+  supportRules?: DiagnosisRule[]; contradictionRules?: DiagnosisRule[]; unknownRules?: DiagnosisRule[];
+}
+export interface TestDefinition { id: string; nameKo: string; nameEn?: string }
+export interface DiagnosisState { unlocked: boolean; isPrimary: boolean; linkedClues: string[]; order: number }
+export interface TimelineEntry { id: string; time: number; kind: "clinical" | "decision" | "test" | "field" | "relationship"; text: string }
+export type TimelineEffectEntry = Omit<TimelineEntry, "time"> & { time?: number };
+export interface ClinicalDatum { label: string; value: string; tone?: "default" | "warning" | "critical" }
+
 export interface CheckResult {
   checkId: string;
   rolls: readonly [number, number];
@@ -53,11 +66,13 @@ export type Effect =
   | { type: "advanceToTime"; value: number }
   | { type: "clue"; patientId: string; clueId: string; remove?: boolean }
   | { type: "diagnosis"; patientId: string; diagnosisId: string; remove?: boolean }
+  | { type: "primaryDiagnosis"; diagnosisId: string }
   | { type: "test"; patientId: string; testId: string; status: PatientState["tests"][string] }
   | { type: "disease"; patientId: string; stage: DiseaseStage }
   | { type: "resonance"; ability: AbilityName; amount: number }
   | { type: "value"; key: string; value: string | number | boolean }
   | { type: "valueIncrement"; key: string; amount: number }
+  | { type: "timeline"; entry: TimelineEffectEntry }
   | { type: "conditional"; conditions: Condition[]; effects: Effect[] };
 
 export interface ActiveCheck {
@@ -89,7 +104,7 @@ export type NarrativeBlock =
   | { type: "system"; text: string; conditions?: Condition[] };
 
 export interface ScenePresentation {
-  mode?: "immersive" | "cinematic";
+  mode?: "default" | "immersive" | "cinematic";
   hideTime?: boolean;
   hideCase?: boolean;
   hideVitals?: boolean;
@@ -97,6 +112,7 @@ export interface ScenePresentation {
   timeLabel?: string;
   location?: string;
   autoAdvanceMs?: number;
+  clinicalData?: ClinicalDatum[];
 }
 
 export type DiagnosisOutcome = "failed" | "late" | "appropriate";
@@ -137,6 +153,9 @@ export interface ChapterDefinition {
     flags?: Record<string, boolean>;
   };
   completion?: { caseId: string; memory: CaseMemory; archive: ArchiveDefinition };
+  clueDefinitions?: Record<string, ClueDefinition>;
+  diagnosisDefinitions?: Record<string, DiagnosisDefinition>;
+  testDefinitions?: Record<string, TestDefinition>;
 }
 
 export interface GameState {
@@ -152,6 +171,8 @@ export interface GameState {
   rngState: number;
   checkResults: Record<string, CheckResult>;
   visitedNodeIds: string[];
+  diagnosisState?: Record<string, DiagnosisState>;
+  timeline?: TimelineEntry[];
   nodeEnteredAt: number;
   updatedAt: number;
 }

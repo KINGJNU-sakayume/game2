@@ -1,9 +1,22 @@
 import type { Effect, GameState, PatientState } from "@/game/types";
 import { evaluateConditions } from "./conditionResolver";
+import { appendTimeline, setPrimaryDiagnosis } from "@/game/state/caseState";
 
 const clampTrust = (value: number) => Math.min(100, Math.max(0, value));
 
 export function applyEffect(state: GameState, effect: Effect): GameState {
+  if (effect.type === "timeline") {
+    const timeline = appendTimeline(state.timeline ?? [], { ...effect.entry, time: effect.entry.time ?? state.time });
+    return timeline === state.timeline ? state : { ...state, timeline };
+  }
+  if (effect.type === "primaryDiagnosis") {
+    const existing = state.diagnosisState ?? {};
+    const current = existing[effect.diagnosisId] ?? { unlocked: true, isPrimary: false, linkedClues: [], order: Object.keys(existing).length };
+    return {
+      ...state,
+      diagnosisState: setPrimaryDiagnosis({ ...existing, [effect.diagnosisId]: { ...current, unlocked: true } }, effect.diagnosisId),
+    };
+  }
   if (effect.type === "conditional") return evaluateConditions(effect.conditions, state) ? applyEffects(state, effect.effects) : state;
   if (effect.type === "flag") return { ...state, flags: { ...state.flags, [effect.key]: effect.value } };
   if (effect.type === "value") return { ...state, values: { ...state.values, [effect.key]: effect.value } };
@@ -26,7 +39,13 @@ export function applyEffect(state: GameState, effect: Effect): GameState {
   switch (effect.type) {
     case "trust": updated = { ...patient, trust: clampTrust(patient.trust + effect.amount) }; break;
     case "clue": updated = { ...patient, clues: effect.remove ? patient.clues.filter((id) => id !== effect.clueId) : [...new Set([...patient.clues, effect.clueId])] }; break;
-    case "diagnosis": updated = { ...patient, diagnoses: effect.remove ? patient.diagnoses.filter((id) => id !== effect.diagnosisId) : [...new Set([...patient.diagnoses, effect.diagnosisId])] }; break;
+    case "diagnosis": {
+      const diagnoses = effect.remove ? patient.diagnoses.filter((id) => id !== effect.diagnosisId) : [...new Set([...patient.diagnoses, effect.diagnosisId])];
+      const current = state.diagnosisState?.[effect.diagnosisId];
+      const diagnosisState = effect.remove ? state.diagnosisState : { ...(state.diagnosisState ?? {}), [effect.diagnosisId]: current ? { ...current, unlocked: true } : { unlocked: true, isPrimary: false, linkedClues: [], order: Object.keys(state.diagnosisState ?? {}).length } };
+      updated = { ...patient, diagnoses };
+      return { ...state, diagnosisState, patients: { ...state.patients, [effect.patientId]: updated } };
+    }
     case "test": updated = { ...patient, tests: { ...patient.tests, [effect.testId]: effect.status } }; break;
     case "disease": updated = { ...patient, diseaseStage: effect.stage }; break;
   }

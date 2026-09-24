@@ -151,6 +151,26 @@ describe("deterioration and diagnostic turn", () => {
     expect(current.currentNodeId).toBe("CASE_003");
   });
 
+  it("keeps narrative diagnosis choices synchronized with CASE primary state", () => {
+    let current = at("CASE_003");
+    current = choose(current, "gbs");
+    expect(current.values.primary_diagnosis).toBe("guillain_barre");
+    expect(current.diagnosisState?.guillain_barre?.isPrimary).toBe(true);
+
+    current = at("CASE_003", current);
+    current = choose(current, "porphyria");
+    expect(current.values.primary_diagnosis).toBe("acute_hepatic_porphyria");
+    expect(current.diagnosisState?.acute_hepatic_porphyria?.isPrimary).toBe(true);
+    expect(Object.values(current.diagnosisState ?? {}).filter(item => item.isPrimary)).toHaveLength(1);
+  });
+
+  it("records PBG ordering at the actual current game time", () => {
+    const current = state();
+    current.time = 1500;
+    const ordered = at("TEST_PBG_01", current);
+    expect(ordered.timeline?.find(item => item.id === "pbg-ordered")?.time).toBe(1500);
+  });
+
   it("records psychiatric anchoring without blocking progress", () => {
     let current = choose(at("CASE_003"), "psych");
     current = choose(current, "anchor");
