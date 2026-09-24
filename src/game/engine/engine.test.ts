@@ -64,10 +64,46 @@ describe("node resolver", () => {
 
   it("selects both success and failure destinations from check results", () => {
     const successChoice = chapter.nodes.start.choices![1];
-    const successChapter = { ...chapter, nodes: { ...chapter.nodes, start: { ...chapter.nodes.start, choices: [{ ...successChoice, check: { ...successChoice.check!, dc: 2 } }] } } };
-    const failureChapter = { ...chapter, nodes: { ...chapter.nodes, start: { ...chapter.nodes.start, choices: [{ ...successChoice, check: { ...successChoice.check!, dc: 99 } }] } } };
+    if (typeof successChoice.next === "string") throw new Error("Expected a checked choice");
+    const outcome = successChoice.next;
+    const chapterWithDc = (dc: number): ChapterDefinition => ({
+      ...chapter,
+      nodes: {
+        ...chapter.nodes,
+        start: {
+          ...chapter.nodes.start,
+          choices: [{ ...successChoice, check: { ...successChoice.check!, dc }, next: { ...outcome } }],
+        },
+      },
+    });
+    const successChapter = chapterWithDc(2);
+    const failureChapter = chapterWithDc(99);
     expect(executeChoice(state(), successChapter, "check", 1).currentNodeId).toBe("end");
     expect(executeChoice(state(), failureChapter, "check", 1).currentNodeId).toBe("failure");
+  });
+
+  it("applies enter and exit effects once per automatic transition", () => {
+    const result = enterNode(state(), {
+      id: "effects", title: "Effects", startNodeId: "a", nodes: {
+        a: { id: "a", blocks: [], onEnter: [{ type: "time", amount: 1 }], onExit: [{ type: "time", amount: 10 }], autoNext: "b" },
+        b: { id: "b", blocks: [], onEnter: [{ type: "time", amount: 100 }] },
+      },
+    }, "a", 1);
+    expect(result.time).toBe(111);
+  });
+
+  it("rejects non-terminating autoNext cycles but allows later explicit revisits", () => {
+    const cyclic: ChapterDefinition = {
+      id: "cycle", title: "Cycle", startNodeId: "a", nodes: {
+        a: { id: "a", blocks: [], autoNext: "b" },
+        b: { id: "b", blocks: [], autoNext: "a" },
+      },
+    };
+    expect(() => enterNode(state(), cyclic, "a", 1)).toThrow("autoNext cycle detected");
+
+    const firstVisit = enterNode(state(), chapter, "end", 1);
+    const secondVisit = enterNode(firstVisit, chapter, "end", 2);
+    expect(secondVisit.visitedNodeIds).toEqual(["end", "end"]);
   });
 });
 

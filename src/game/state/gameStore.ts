@@ -16,6 +16,8 @@ interface GameStore {
   restore: (state: GameState) => void;
 }
 
+let hydrationPromise: Promise<void> | undefined;
+
 export const useGameStore = create<GameStore>((set, get) => ({
   activeRun: null,
   hydrated: false,
@@ -31,8 +33,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ activeRun: enterNode(base, chapter, chapter.startNodeId, timestamp) });
   },
   hydrate: async () => {
-    const saved = await loadActiveRun();
-    set((current) => ({ activeRun: saved ?? current.activeRun, hydrated: true }));
+    hydrationPromise ??= loadActiveRun()
+      .then((saved) => set((current) => ({ activeRun: saved ?? current.activeRun })))
+      .catch(() => undefined)
+      .finally(() => set({ hydrated: true }));
+    await hydrationPromise;
   },
   enter: (chapter, nodeId) => {
     const state = get().activeRun;
@@ -44,8 +49,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ inputLocked: true });
     try {
       const completed = executeChoice(current.activeRun, chapter, choiceId, Date.now());
-      set({ activeRun: completed });
       await saveActiveRun(completed);
+      set({ activeRun: completed });
     } finally {
       set({ inputLocked: false });
     }

@@ -57,16 +57,19 @@ export interface ActiveCheck {
   modifiers?: number;
 }
 
-export interface Choice {
+interface ChoiceBase {
   id: string;
   label: string;
   ariaLabel?: string;
   conditions?: Condition[];
   effects?: Effect[];
   timeCost?: number;
-  check?: ActiveCheck;
-  next: string | { success: string; failure: string };
 }
+
+export type Choice = ChoiceBase & (
+  | { check?: never; next: string }
+  | { check: ActiveCheck; next: { success: string; failure: string } }
+);
 
 export type NarrativeBlock =
   | { type: "prose"; text: string }
