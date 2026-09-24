@@ -29,7 +29,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const timestamp = Date.now();
     const base: GameState = {
       runId: crypto.randomUUID(), chapterId: chapter.id, currentNodeId: chapter.startNodeId,
-      player, patients: {}, flags: {}, time: 0, resonance: 0, rngState: seed >>> 0,
+      player,
+      patients: chapter.initial?.patients ?? {},
+      flags: chapter.initial?.flags ?? {},
+      time: chapter.initial?.time ?? 0,
+      resonance: 0, rngState: seed >>> 0,
       checkResults: {}, visitedNodeIds: [], nodeEnteredAt: timestamp, updatedAt: timestamp,
     };
     set({ activeRun: enterNode(base, chapter, chapter.startNodeId, timestamp) });
