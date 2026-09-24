@@ -1,5 +1,7 @@
 import Dexie, { type EntityTable } from "dexie";
 import type { GameState } from "@/game/types";
+import { ABILITY_NAMES } from "@/game/types";
+import { zeroResonance } from "@/game/abilities";
 
 interface SavedRun { id: "active"; state: GameState; savedAt: number }
 
@@ -22,7 +24,16 @@ export async function saveActiveRun(state: GameState): Promise<void> {
 }
 
 export async function loadActiveRun(): Promise<GameState | undefined> {
-  return (await getDatabase()?.runs.get("active"))?.state;
+  const saved = (await getDatabase()?.runs.get("active"))?.state;
+  if (!saved) return undefined;
+  const legacy = saved as GameState & { resonance: GameState["resonance"] | number };
+  const abilities = Object.fromEntries(ABILITY_NAMES.map((name) => [name, saved.player.abilities[name] ?? (name === "decision" ? (saved.player.abilities as Record<string, number>).resolve : undefined) ?? 2]));
+  return {
+    ...saved,
+    player: { ...saved.player, abilities: abilities as GameState["player"]["abilities"] },
+    values: saved.values ?? {},
+    resonance: typeof legacy.resonance === "number" ? zeroResonance() : { ...zeroResonance(), ...legacy.resonance },
+  };
 }
 
 export async function clearActiveRun(): Promise<void> {

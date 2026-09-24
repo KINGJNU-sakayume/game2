@@ -1,4 +1,5 @@
 import type { NarrativeBlock as NarrativeBlockType } from "@/game/types";
+import { ABILITY_PRESENTATION } from "@/game/abilities";
 
 export function NarrativeBlock({ block }: { block: NarrativeBlockType }) {
   if (block.type === "dialogue") return (
@@ -8,5 +9,8 @@ export function NarrativeBlock({ block }: { block: NarrativeBlockType }) {
     </blockquote>
   );
   const styles = block.type === "thought" ? "italic text-stone-400" : block.type === "system" ? "rounded-lg bg-white/5 p-4 text-sm text-stone-400" : "text-stone-200";
-  return <p className={`my-5 whitespace-pre-line leading-8 ${styles}`}>{block.type === "thought" && block.label ? <strong className="mr-2 not-italic text-amber-200">{block.label}</strong> : null}{block.text}</p>;
+  const thoughtLabel = block.type === "thought" && block.ability
+    ? `${ABILITY_PRESENTATION[block.ability].symbol} ${ABILITY_PRESENTATION[block.ability].name}`
+    : block.type === "thought" ? block.label : undefined;
+  return <p className={`my-5 whitespace-pre-line leading-8 ${styles}`}>{thoughtLabel ? <strong className="mr-2 not-italic text-amber-200">{thoughtLabel}</strong> : null}{block.text}</p>;
 }

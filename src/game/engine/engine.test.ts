@@ -4,13 +4,14 @@ import { evaluateCondition } from "./conditionResolver";
 import { applyEffects } from "./effectResolver";
 import { enterNode, executeChoice, getAvailableChoices } from "./nodeResolver";
 import type { ChapterDefinition, GameState } from "@/game/types";
+import { zeroResonance } from "@/game/abilities";
 
 function state(overrides: Partial<GameState> = {}): GameState {
   return {
     runId: "run", chapterId: "chapter", currentNodeId: "start",
-    player: { name: "P", abilities: { observation: 2, empathy: 1, reasoning: 0, resolve: -1 } },
+    player: { name: "P", abilities: { observation: 2, history: 1, empathy: 1, mechanism: 0, reasoning: 0, suspicion: 1, decision: -1 } },
     patients: { p: { id: "p", name: "Patient", trust: 50, diseaseStage: "latent", clues: [], diagnoses: [], tests: {} } },
-    flags: {}, time: 0, resonance: 0, rngState: 42, checkResults: {}, visitedNodeIds: [], nodeEnteredAt: 0, updatedAt: 0,
+    flags: {}, values: {}, time: 0, resonance: zeroResonance(), rngState: 42, checkResults: {}, visitedNodeIds: [], nodeEnteredAt: 0, updatedAt: 0,
     ...overrides,
   };
 }
@@ -64,7 +65,7 @@ describe("node resolver", () => {
 
   it("selects both success and failure destinations from check results", () => {
     const successChoice = chapter.nodes.start.choices![1];
-    if (typeof successChoice.next === "string") throw new Error("Expected a checked choice");
+    if (!successChoice.check || typeof successChoice.next === "string" || !successChoice.next) throw new Error("Expected a checked choice");
     const outcome = successChoice.next;
     const chapterWithDc = (dc: number): ChapterDefinition => ({
       ...chapter,
@@ -117,9 +118,9 @@ describe("deterministic checks", () => {
   });
 
   it("reuses a stored first result without consuming RNG", () => {
-    const first = resolveCheck({ id: "x", ability: "resolve", dc: 20 }, state(), 1);
+    const first = resolveCheck({ id: "x", ability: "decision", dc: 20 }, state(), 1);
     const cachedState = state({ rngState: first.rngState, checkResults: { x: first.result } });
-    const again = resolveCheck({ id: "x", ability: "resolve", dc: 2 }, cachedState, 999);
+    const again = resolveCheck({ id: "x", ability: "decision", dc: 2 }, cachedState, 999);
     expect(again.cached).toBe(true);
     expect(again.result).toBe(first.result);
     expect(again.rngState).toBe(first.rngState);

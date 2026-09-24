@@ -1,15 +1,19 @@
 import type { Effect, GameState, PatientState } from "@/game/types";
+import { evaluateConditions } from "./conditionResolver";
 
 const clampTrust = (value: number) => Math.min(100, Math.max(0, value));
 
 export function applyEffect(state: GameState, effect: Effect): GameState {
+  if (effect.type === "conditional") return evaluateConditions(effect.conditions, state) ? applyEffects(state, effect.effects) : state;
   if (effect.type === "flag") return { ...state, flags: { ...state.flags, [effect.key]: effect.value } };
+  if (effect.type === "value") return { ...state, values: { ...state.values, [effect.key]: effect.value } };
   if (effect.type === "increment") return {
     ...state,
     player: { ...state.player, abilities: { ...state.player.abilities, [effect.ability]: state.player.abilities[effect.ability] + effect.amount } },
   };
   if (effect.type === "time") return { ...state, time: state.time + effect.amount };
-  if (effect.type === "resonance") return { ...state, resonance: state.resonance + effect.amount };
+  if (effect.type === "setTime") return { ...state, time: effect.value };
+  if (effect.type === "resonance") return { ...state, resonance: { ...state.resonance, [effect.ability]: state.resonance[effect.ability] + effect.amount } };
 
   const patient = state.patients[effect.patientId];
   if (!patient) return state;

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChapterDefinition, GameState } from "@/game/types";
+import { zeroResonance } from "@/game/abilities";
 
 const persistence = vi.hoisted(() => ({
   load: vi.fn(),
@@ -41,11 +42,12 @@ function initialState(): GameState {
     runId: "run",
     chapterId: chapter.id,
     currentNodeId: chapter.startNodeId,
-    player: { name: "Player", abilities: { observation: 0, empathy: 0, reasoning: 2, resolve: 0 } },
+    player: { name: "Player", abilities: { observation: 0, history: 0, empathy: 0, mechanism: 0, reasoning: 2, suspicion: 0, decision: 0 } },
     patients: {},
     flags: {},
+    values: {},
     time: 0,
-    resonance: 0,
+    resonance: zeroResonance(),
     rngState: 42,
     checkResults: {},
     visitedNodeIds: [chapter.startNodeId],
