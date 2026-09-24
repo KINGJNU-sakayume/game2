@@ -60,7 +60,7 @@ describe("field investigation", () => {
   });
 
   it("captures rehearsal diet, motor weakness, lead red herring and deduplicates clues", () => {
-    let current = at("REH_DIET"); current = at("REH_DIET", current);
+    let current = at("REH_DIET", state({ mechanism: 3 })); current = at("REH_DIET", current);
     expect(current.patients.harin.clues.filter(id => id === "severe_caloric_restriction")).toHaveLength(1);
     current = at("REH_MOTOR", current);
     current = at("REH_ENV", current);
