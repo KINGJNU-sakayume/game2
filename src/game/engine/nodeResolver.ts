@@ -19,7 +19,10 @@ export function enterNode(state: GameState, chapter: ChapterDefinition, nodeId: 
     seen.add(targetId);
     nextState = applyEffects(nextState, node.onEnter);
     nextState = { ...nextState, currentNodeId: targetId, nodeEnteredAt: timestamp, updatedAt: timestamp, visitedNodeIds: [...nextState.visitedNodeIds, targetId] };
-    if (!node.autoNext) return nextState;
+    // Timed transitions are driven by the renderer so the scene remains visible
+    // for its content-defined duration. Ordinary autoNext nodes retain the
+    // existing synchronous resolver behavior.
+    if (!node.autoNext || node.presentation?.autoAdvanceMs !== undefined) return nextState;
     nextState = applyEffects(nextState, node.onExit);
     targetId = node.autoNext;
   }

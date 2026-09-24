@@ -5,4 +5,7 @@
 html { background: #11100f; }
 body { margin: 0; background: radial-gradient(circle at 50% -10%, #29241d 0%, #11100f 42%); color: #f5f5f4; font-family: Arial, Helvetica, sans-serif; }
 button { font: inherit; }
+.scene-image { height: 12rem; margin-bottom: 2rem; border: 1px solid rgb(255 255 255 / .08); border-radius: 1rem; background-color: #181613; box-shadow: inset 0 -3rem 5rem rgb(0 0 0 / .55); }
+.scene-image-rehearsal { background-image: radial-gradient(ellipse at 50% 18%, rgb(245 190 90 / .22), transparent 25%), linear-gradient(165deg, transparent 50%, rgb(210 170 100 / .08) 51%, transparent 52%), linear-gradient(#27221b, #0d0c0b); }
+.scene-image-erInitial { background-image: linear-gradient(90deg, transparent 48%, rgb(160 210 205 / .12) 49%, rgb(160 210 205 / .12) 51%, transparent 52%), linear-gradient(#202828, #101313); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }

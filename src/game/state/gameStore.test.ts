@@ -102,4 +102,10 @@ describe("gameStore persistence failures", () => {
     expect(retriedState.rngState).toBe(rngAfterCheck);
     expect(useGameStore.getState().persistenceStatus).toBe("healthy");
   });
+
+  it("restores the same current node from a saved run", async () => {
+    const saved = { ...initialState(), currentNodeId: "middle", visitedNodeIds: ["start", "middle"] };
+    useGameStore.getState().restore(saved);
+    expect(useGameStore.getState().activeRun?.currentNodeId).toBe("middle");
+  });
 });

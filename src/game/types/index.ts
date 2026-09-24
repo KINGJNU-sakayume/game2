@@ -72,10 +72,20 @@ export type Choice = ChoiceBase & (
 );
 
 export type NarrativeBlock =
-  | { type: "prose"; text: string }
-  | { type: "dialogue"; speaker: string; text: string }
-  | { type: "thought"; text: string }
-  | { type: "system"; text: string };
+  | { type: "prose"; text: string; conditions?: Condition[] }
+  | { type: "dialogue"; speaker: string; text: string; conditions?: Condition[] }
+  | { type: "thought"; text: string; conditions?: Condition[]; label?: string }
+  | { type: "system"; text: string; conditions?: Condition[] };
+
+export interface ScenePresentation {
+  mode?: "immersive" | "cinematic";
+  hideTime?: boolean;
+  hideCase?: boolean;
+  imageKey?: string;
+  timeLabel?: string;
+  location?: string;
+  autoAdvanceMs?: number;
+}
 
 export interface StoryNode {
   id: string;
@@ -86,6 +96,7 @@ export interface StoryNode {
   onEnter?: Effect[];
   onExit?: Effect[];
   autoNext?: string;
+  presentation?: ScenePresentation;
 }
 
 export interface ChapterDefinition {
@@ -93,6 +104,11 @@ export interface ChapterDefinition {
   title: string;
   startNodeId: string;
   nodes: Record<string, StoryNode>;
+  initial?: {
+    time?: number;
+    patients?: Record<string, PatientState>;
+    flags?: Record<string, boolean>;
+  };
 }
 
 export interface GameState {
