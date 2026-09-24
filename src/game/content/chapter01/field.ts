@@ -41,7 +41,12 @@ export const fieldNodes: Record<string, StoryNode> = {
     { id: "exit", label: "조사를 마친다", next: "APT_EXIT" },
   ] },
   APT_FRIDGE: { id: "APT_FRIDGE", blocks: [p("냉장고 안.\n\n탄산수.\n저지방 요거트 두 개.\n달걀.\n병커피.\n\n제대로 된 식사 재료가 거의 없다."), thought("observation", "며칠 비운 냉장고가 아니다.", 2), thought("mechanism", "탄수화물이 거의 없다.", 3)], onEnter: [{ type: "time", amount: 6 }, mark("apt_fridge_complete"), setFlag("restricted_diet_known"), clue("severe_caloric_restriction")], choices: go("APT_001") },
-  APT_VANITY: { id: "APT_VANITY", blocks: [p("화장대.\n\n화장품.\n비타민.\n진통제.\n\n그리고 작은 약 포장."), p("경구피임약 blister pack.", [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }]), thought("mechanism", "호르몬.\n\n잠시.\n\n저열량.\n\n둘을 같이 기억해.", 4)], onEnter: [{ type: "time", amount: 8 }, mark("apt_vanity_complete"), { type: "conditional", conditions: [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }], effects: [setFlag("ocp_known"), clue("recent_hormonal_medication")] }], choices: go("APT_001") },
+  APT_VANITY: { id: "APT_VANITY", blocks: [
+    p("화장대.\n\n화장품.\n비타민.\n진통제.\n\n그리고 작은 약 포장."),
+    p("경구피임약 blister pack.", [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }]),
+    { type: "thought", ability: "mechanism", text: "호르몬.", conditions: [ability("mechanism", 4), flag("ocp_known")] },
+    { type: "thought", ability: "mechanism", text: "저열량.\n\n둘을 같이 기억해.", conditions: [ability("mechanism", 4), flag("ocp_known"), flag("restricted_diet_known")] },
+  ], onEnter: [{ type: "time", amount: 8 }, mark("apt_vanity_complete"), { type: "conditional", conditions: [{ type: "any", conditions: [ability("observation", 3), ability("suspicion", 3)] }], effects: [setFlag("ocp_known"), clue("recent_hormonal_medication")] }], choices: go("APT_001") },
   APT_DESK: { id: "APT_DESK", blocks: [p("수첩.\n\nD-10  51.2\nD-8   50.4\nD-5   49.8\nD-3   49.1"), thought("observation", "짧은 시간이다."), thought("empathy", "‘조금 줄였다’는 말과\n이 숫자는 다르다.", 3)], onEnter: [{ type: "time", amount: 5 }, mark("apt_desk_complete"), setFlag("restricted_diet_known"), clue("rapid_weight_loss")], choices: go("APT_001") },
   APT_EXIT: { id: "APT_EXIT", blocks: [{ ...thought("reasoning", "발작 직전에 달라진 것들이 있다.\n\n식사.\n\n호르몬."), conditions: [flag("restricted_diet_known"), flag("ocp_known")] }], onEnter: [setFlag("visited_apartment"), ...incrementLocation], choices: go("FIELD_RETURN") },
 
@@ -53,7 +58,10 @@ export const fieldNodes: Record<string, StoryNode> = {
   REH_PREV: { id: "REH_PREV", blocks: [d("정세영", "“작년에도 비슷했어요.\n\n배 아프다고 하고.\n\n잠 못 자고.\n\n되게 예민해지고.”")], onEnter: [mark("reh_prev_complete"), setFlag("previous_attacks_known"), clue("previous_attacks")], choices: go("REH_001") },
   REH_DIET: { id: "REH_DIET", blocks: [d("정세영", "“요즘 거의 안 먹었어요.\n커피만 마시는 날도 있었고.”"), d("플레이어", "“누가 체중 감량을 요구했습니까?”"), d("정세영", "“아뇨. 그렇게 단순한 건 아니에요.\n이번 공연 끝나면 중요한 오디션이 있어서…”"), thought("empathy", "강요받지 않았다는 것과\n압박이 없었다는 것은 다른 말이다.", 3)], onEnter: [mark("reh_diet_complete"), setFlag("restricted_diet_known"), clue("severe_caloric_restriction")], choices: go("REH_001") },
   REH_MOTOR: { id: "REH_MOTOR", blocks: [d("정세영", "“아. 며칠 전에 물병을 못 열었어요.”"), d("플레이어", "“왜요?”"), d("정세영", "“손에 힘이 안 들어간다고.”"), thought("reasoning", "복통보다 먼저.")], onEnter: [mark("reh_motor_complete"), setFlag("early_weakness_known"), clue("preexisting_motor_weakness")], choices: go("REH_001") },
-  REH_ENV: { id: "REH_ENV", blocks: [p("낡은 연습실 일부에 공사 흔적."), thought("suspicion", "오래된 페인트.", 3), thought("mechanism", "납?", 3)], onEnter: [mark("reh_env_complete"), setFlag("lead_poisoning_available"), { type: "diagnosis", patientId: "harin", diagnosisId: "lead_poisoning" }], choices: go("REH_001") },
+  REH_ENV: { id: "REH_ENV", blocks: [p("낡은 연습실 일부에 공사 흔적."), thought("suspicion", "오래된 페인트.", 3), thought("mechanism", "납?", 3)], onEnter: [
+    mark("reh_env_complete"),
+    { type: "conditional", conditions: [ability("mechanism", 3)], effects: [setFlag("lead_poisoning_available"), { type: "diagnosis", patientId: "harin", diagnosisId: "lead_poisoning" }] },
+  ], choices: go("REH_001") },
   REH_OCP: { id: "REH_OCP", blocks: [d("정세영", "“아, 그리고…\n하린이가 저한테 피임약 물어봤어요.\n생리 미루려고.\n열흘 정도 됐나.”")], onEnter: [mark("reh_ocp_complete"), setFlag("ocp_known"), clue("recent_hormonal_medication")], choices: go("REH_001") },
   REH_EXIT: { id: "REH_EXIT", blocks: [], onEnter: [setFlag("visited_rehearsal"), ...incrementLocation], choices: go("FIELD_RETURN") },
 
@@ -68,7 +76,10 @@ export const fieldNodes: Record<string, StoryNode> = {
   ] },
   FAM_PERMISSION_OK: { id: "FAM_PERMISSION_OK", blocks: [d("윤하린", "“…제가 먼저 말하면 안 돼요?”"), d("플레이어", "“그렇게 하셔도 됩니다.”")], onEnter: [{ type: "trust", patientId: "harin", amount: 3 }], choices: go("FAM_002", "연락을 기다린다") },
   FAM_PERMISSION_INSIST: { id: "FAM_PERMISSION_INSIST", blocks: [d("윤하린", "“…알겠어요.”")], onEnter: [{ type: "trust", patientId: "harin", amount: -2 }], choices: go("FAM_002") },
-  FAM_PERMISSION_DELAY: { id: "FAM_PERMISSION_DELAY", blocks: [d("윤하린", "“지금은 싫어요.”"), p("지금 강행하지 않아도 다른 경로는 남아 있다.")], choices: [{ id: "return", label: "지금은 연락하지 않는다", next: "FIELD_RETURN" }, { id: "contact-later", label: "필요성을 설명하고 다시 연락한다", next: "FAM_002" }] },
+  FAM_PERMISSION_DELAY: { id: "FAM_PERMISSION_DELAY", blocks: [d("윤하린", "“지금은 싫어요.”"), p("지금 강행하지 않아도 다른 경로는 남아 있다.")], choices: [
+    { id: "return", label: "지금은 연락하지 않는다", next: "FIELD_RETURN" },
+    { id: "contact-anyway", label: "그래도 가족에게 연락한다", effects: [setFlag("family_boundary_broken"), { type: "trust", patientId: "harin", amount: -15 }], next: "FAM_002" },
+  ] },
   FAM_002: { id: "FAM_002", blocks: [d("윤미정", "“하린이가 또 병원 갔어요?”"), thought("history", "또.", 3), d("플레이어", "“가족 중 반복적인 심한 복통을 겪은 분이 있습니까?”"), d("윤미정", "“없어요.”"), thought("suspicion", "너무 빨랐다.", 3)], choices: go("FAM_003") },
   FAM_003: { id: "FAM_003", blocks: [d("플레이어", "“복통과 함께 불면, 이상행동, 손발 힘 빠짐 같은 증상은요?”"), p("침묵."), d("윤미정", "“제 동생이 좀 그랬어요.\n젊을 때 배가 자주 아팠고.\n검사하면 아무것도 안 나온다고…\n한 번은 손에 힘이 빠져 입원했고.\n정신과에도 갔어요.”"), thought("mechanism", "복부.\n정신.\n운동신경.\n반복성."), thought("reasoning", "그리고 한 가족.")], onEnter: [setFlag("family_history_known"), clue("maternal_family_recurrent_neurovisceral_attacks")], choices: go("FAM_004") },
   FAM_004: { id: "FAM_004", blocks: [d("플레이어", "“요즘도 그러십니까?”"), d("윤미정", "“아뇨. 마흔 넘고는 거의 못 들었어요.”"), thought("mechanism", "…", 5)], onEnter: [setFlag("contacted_family"), ...incrementLocation], choices: go("FIELD_RETURN") },
