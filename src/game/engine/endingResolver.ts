@@ -9,22 +9,26 @@ export function classifyRelationship(state: GameState): RelationshipOutcome {
   const trust = state.patients.harin?.trust ?? 0;
   const unresolvedBoundary = state.flags.family_boundary_broken && !state.flags.patient_apology_given;
   if (trust < 20 || unresolvedBoundary) return "broken";
-  if (trust >= 60 && !state.flags.family_boundary_broken) return "trusted";
+  if (trust >= 60) return "trusted";
   return "guarded";
 }
 
 export function endingContext(state: GameState): EndingContext {
+  const recordedDiagnosis = state.values.diagnosis_outcome;
+  const diagnosis = recordedDiagnosis === "failed" || recordedDiagnosis === "late" || recordedDiagnosis === "appropriate"
+    ? recordedDiagnosis
+    : "appropriate";
   return {
-    diagnosis: state.values.diagnosis_outcome === "failed" ? "failed" : state.flags.treatment_delay_significant ? "late" : "appropriate",
+    diagnosis,
     treatment: state.values.treatment_timing === "appropriate" ? "appropriate" : "delayed",
     trigger: classifyTrigger(state), relationship: classifyRelationship(state),
   };
 }
 
 /** Generic priority resolver; it knows only outcome axes, never chapter flags. */
-export function resolveEnding(context: EndingContext, severeDelay = context.diagnosis === "late"): string {
+export function resolveEnding(context: EndingContext, severeDelay = false): string {
   if (context.diagnosis === "failed") return "END_E";
-  if (severeDelay) return "END_B";
+  if (severeDelay || context.diagnosis === "late" || context.treatment === "delayed") return "END_B";
   if (context.relationship === "broken") return "END_C";
   if (context.trigger !== "sufficient") return "END_D";
   return "END_A";
