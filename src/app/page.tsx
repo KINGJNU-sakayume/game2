@@ -1,4 +1,4 @@
 import { SceneRenderer } from "@/components/game/SceneRenderer";
-import { defaultPlayer, demoChapter } from "@/game/content/demoChapter";
+import { chapter01, defaultPlayer } from "@/game/content/chapter01";
 
-export default function Home() { return <SceneRenderer chapter={demoChapter} player={defaultPlayer} />; }
+export default function Home() { return <SceneRenderer chapter={chapter01} player={defaultPlayer} />; }
