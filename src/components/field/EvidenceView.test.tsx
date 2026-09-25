@@ -8,10 +8,11 @@ describe("EvidenceView", () => {
   it("renders evidence data as HTML and opens an accessible modal", () => {
     render(<EvidenceView asset={asset}/>);
     expect(screen.getByText("51.2")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /확대$/ }));
+    const trigger = screen.getByRole("button", { name: /확대$/ }); fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "증거 확대" })).toHaveAttribute("aria-modal", "true");
-    fireEvent.click(screen.getByRole("button", { name: "확대 이미지 닫기" }));
+    const close = screen.getByRole("button", { name: "확대 이미지 닫기" }); expect(close).toHaveFocus(); fireEvent.click(close);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
   it("closes on Escape without changing external game state", () => {
     const state = Object.freeze({ time: 1328, flags: Object.freeze({ clue: false }) });
@@ -20,7 +21,7 @@ describe("EvidenceView", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument(); expect(state).toEqual({ time: 1328, flags: { clue: false } });
   });
   it("closes from the backdrop", () => {
-    const { container } = render(<EvidenceView asset={asset}/>); fireEvent.click(screen.getByRole("button", { name: /확대$/ }));
-    fireEvent.mouseDown(container.querySelector(".evidence-modal")!); expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    render(<EvidenceView asset={asset}/>); fireEvent.click(screen.getByRole("button", { name: /확대$/ }));
+    fireEvent.mouseDown(document.querySelector(".evidence-modal")!); expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

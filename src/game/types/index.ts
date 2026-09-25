@@ -48,6 +48,20 @@ export interface VisualAssetDefinition {
   overlay?: EvidenceOverlay;
 }
 
+export interface SceneHotspot {
+  id: string;
+  label: string;
+  /** Percentage coordinates relative to the displayed scene image. */
+  x: number;
+  y: number;
+  /** Optional percentage dimensions; the rendered target is always at least 44 CSS px. */
+  width?: number;
+  height?: number;
+  /** A shortcut to a choice on the same node, never an independent transition. */
+  choiceId: string;
+  icon?: "inspect" | "object" | "person" | "environment";
+}
+
 export interface CheckResult {
   checkId: string;
   rolls: readonly [number, number];
@@ -132,6 +146,7 @@ export interface ScenePresentation {
   location?: string;
   autoAdvanceMs?: number;
   clinicalData?: ClinicalDatum[];
+  hotspots?: SceneHotspot[];
 }
 
 export type DiagnosisOutcome = "failed" | "late" | "appropriate";

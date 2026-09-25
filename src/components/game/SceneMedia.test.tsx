@@ -18,8 +18,11 @@ describe("SceneMedia", () => {
   it("reveals an actual image on load and returns to fallback on error without a broken icon", () => {
     const { container } = render(<SceneMedia asset={asset}/>); const image = screen.getByAltText(asset.alt);
     fireEvent.load(image); expect(container.querySelector(".asset-image")).toHaveAttribute("data-load-state", "loaded");
+    expect(container.querySelector(".asset-fallback")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: asset.alt })).toHaveLength(1);
     fireEvent.error(image); expect(container.querySelector(".asset-image")).toHaveAttribute("data-load-state", "error");
     expect(container.querySelector(".asset-fallback")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: `${asset.alt} (대체 이미지)` })).toBeInTheDocument();
   });
   it("does not render evidence through the scene hero path", () => {
     const { container } = render(<SceneMedia asset={chapter01VisualAssets.EVD_001_URINE}/>);
