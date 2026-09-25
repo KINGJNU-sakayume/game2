@@ -34,7 +34,11 @@ export const fieldNodes: Record<string, StoryNode> = {
   FIELD_OVERSTAY_FAM_001: { id: "FIELD_OVERSTAY_FAM_001", blocks: [thought("decision", "환자는 병원에 있다.\n\n정보가 더 필요한가,\n네가 더 필요한가?")], choices: [{ id: "continue-overstay", label: "그래도 가족에게 연락한다", effects: [setFlag("field_overstay"), { type: "time", amount: 15 }], next: "FAM_001" }, { id: "return", label: "병원으로 돌아간다", next: "DET_001" }] },
   FIELD_OVERSTAY_HOSP_EXTRA_001: { id: "FIELD_OVERSTAY_HOSP_EXTRA_001", blocks: [thought("decision", "환자는 병원에 있다.\n\n정보가 더 필요한가,\n네가 더 필요한가?")], choices: [{ id: "continue-overstay", label: "그래도 추가 확인한다", effects: [setFlag("field_overstay"), { type: "time", amount: 15 }], next: "HOSP_EXTRA_001" }, { id: "return", label: "환자에게 돌아간다", next: "DET_001" }] },
 
-  APT_001: { id: "APT_001", presentation: { assetId: "SCN_003_APARTMENT" }, title: "윤하린의 원룸", blocks: [p("윤하린의 작은 원룸.\n\n정돈되어 있지만 생활 흔적은 있다.")], choices: [
+  APT_001: { id: "APT_001", presentation: { assetId: "SCN_003_APARTMENT", hotspots: [
+    { id: "apartment-fridge", label: "냉장고 조사", x: 8, y: 62, width: 12, height: 38, choiceId: "fridge", icon: "object" },
+    { id: "apartment-vanity", label: "화장대 조사", x: 23, y: 48, width: 17, height: 25, choiceId: "vanity", icon: "inspect" },
+    { id: "apartment-desk", label: "책상과 체중 기록 조사", x: 38, y: 48, width: 16, height: 25, choiceId: "desk", icon: "inspect" },
+  ] }, title: "윤하린의 원룸", blocks: [p("윤하린의 작은 원룸.\n\n정돈되어 있지만 생활 흔적은 있다.")], choices: [
     { id: "fridge", label: "냉장고를 확인한다", conditions: hotspot("apt_fridge_complete"), next: "APT_FRIDGE" },
     { id: "vanity", label: "화장대를 살핀다", conditions: hotspot("apt_vanity_complete"), next: "APT_VANITY" },
     { id: "desk", label: "책상을 확인한다", conditions: hotspot("apt_desk_complete"), next: "APT_DESK" },
@@ -50,7 +54,10 @@ export const fieldNodes: Record<string, StoryNode> = {
   APT_DESK: { id: "APT_DESK", presentation: { assetId: "EVD_003_WEIGHT_NOTEBOOK" }, blocks: [p("체중 변화가 적힌 수첩."), thought("observation", "짧은 시간이다."), thought("empathy", "‘조금 줄였다’는 말과\n이 숫자는 다르다.", 3)], onEnter: [{ type: "time", amount: 5 }, mark("apt_desk_complete"), setFlag("restricted_diet_known"), clue("rapid_weight_loss")], choices: go("APT_001") },
   APT_EXIT: { id: "APT_EXIT", blocks: [{ ...thought("reasoning", "발작 직전에 달라진 것들이 있다.\n\n식사.\n\n호르몬."), conditions: [flag("restricted_diet_known"), flag("ocp_known")] }], onEnter: [setFlag("visited_apartment"), ...incrementLocation], choices: go("FIELD_RETURN") },
 
-  REH_001: { id: "REH_001", presentation: { assetId: "SCN_004_REHEARSAL_EMPTY" }, title: "밤의 연습실", blocks: [p("밤의 텅 빈 연습실.\n정세영이 기다린다."), d("정세영", "“뭐가 문제래요?”"), d("플레이어", "“아직 찾는 중입니다.”"), d("정세영", "“역시.”")], choices: [
+  REH_001: { id: "REH_001", presentation: { assetId: "SCN_004_REHEARSAL_EMPTY", hotspots: [
+    { id: "rehearsal-bottle-bag", label: "물병과 가방 주변 조사", x: 82, y: 53, width: 18, height: 18, choiceId: "motor", icon: "object" },
+    { id: "rehearsal-old-wall", label: "오래된 벽과 공사 흔적 조사", x: 10, y: 35, width: 18, height: 28, choiceId: "environment", icon: "environment" },
+  ] }, title: "밤의 연습실", blocks: [p("밤의 텅 빈 연습실.\n정세영이 기다린다."), d("정세영", "“뭐가 문제래요?”"), d("플레이어", "“아직 찾는 중입니다.”"), d("정세영", "“역시.”")], choices: [
     { id: "previous", label: "“역시?”", conditions: available("reh_prev_complete"), next: "REH_PREV" }, { id: "diet", label: "최근 식사 상태를 묻는다", conditions: available("reh_diet_complete"), next: "REH_DIET" },
     { id: "motor", label: "최근 힘이 빠지거나 이상했던 일이 있는지 묻는다", conditions: available("reh_motor_complete"), next: "REH_MOTOR" }, { id: "environment", label: "연습실 환경을 확인한다", conditions: available("reh_env_complete"), next: "REH_ENV" },
     { id: "ocp", label: "최근 새로 먹기 시작한 약이 있었는지 묻는다", conditions: [flag("reh_ocp_complete", false), { type: "any", conditions: [ability("empathy", 4), flag("restricted_diet_known"), flag("medication_incomplete")] }], next: "REH_OCP" }, { id: "exit", label: "조사를 마친다", next: "REH_EXIT" },
