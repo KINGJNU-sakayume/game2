@@ -41,7 +41,7 @@ export const openingNodes: Record<string, StoryNode> = {
     id: "PR_002",
     presentation: { hideTime: true, hideCase: true, backdrop: "home-night", location: "서울 · 딸의 아파트" },
     blocks: [
-      stamp("여드레 뒤"),
+      stamp("추석 지나고 열흘"),
       p("딸의 아파트 거실. 순례는 소파에서 일어나지 못한다."),
       d("이수경", "“엄마, 병원 가자. 열이 39도야.”"),
       d("문순례", "“감기라니까. 약 먹었어.”"),
@@ -145,6 +145,7 @@ export const openingNodes: Record<string, StoryNode> = {
     id: "ER_TRAVEL",
     blocks: [
       d("이수경", "“추석에 시골 다녀왔어요. 엄마는 거기 혼자 사세요. 전북 상월리.”"),
+      d("이수경", "“열이 안 떨어져서 어제 제가 모시고 올라왔어요.”"),
       d("문순례", "“산소 풀 좀 뽑았지. 영자랑.”"),
       d("이수경", "“비 그치고 논일도 하셨고요. 창고 정리도 하시고.”"),
       thought("history", "풀. 논. 창고. 가을.\n이 네 단어가 한 줄에 서 있다.", 3),

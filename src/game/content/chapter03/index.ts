@@ -66,7 +66,7 @@ export const chapter03: ChapterDefinition = {
   number: 3,
   title: "CHAPTER 3 — 아무도 보지 않은 곳",
   subtitle: "아무도 보지 않은 곳",
-  synopsis: "추석이 지나고 여드레. 엿새째 열이 나는 일흔여섯 할머니. 소변에 백혈구, 동네 의원 항생제는 듣지 않는다. 모두가 요로감염이라고 한다.",
+  synopsis: "추석이 지나고 열흘. 엿새째 열이 나는 일흔여섯 할머니. 소변에 백혈구, 동네 의원 항생제는 듣지 않는다. 모두가 요로감염이라고 한다.",
   cover: { backdrop: "village" },
   startNodeId: "PR_001",
   initial: {
