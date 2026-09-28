@@ -20,6 +20,7 @@ import { Hud } from "./Hud";
 import { MenuSheet } from "./MenuSheet";
 import { NodeView } from "./NodeView";
 import { Backdrop, SceneArt } from "./SceneArt";
+import { PLACE_CARD_MS } from "./SceneCard";
 import { Toasts, type Toast } from "./Toasts";
 import { IconNext } from "./icons";
 
@@ -98,9 +99,14 @@ export function Stage({ chapter, run, defaultPlayer }: { chapter: ChapterDefinit
       }
     }
     if (!found.length) return;
-    setToasts((current) => [...current, ...found].slice(-3));
+    // A place title owns the top of the screen first; the chart notes follow as it fades.
+    const entered = chapter.nodes[run.currentNodeId];
+    const delay = before.currentNodeId !== run.currentNodeId && entered?.title && entered.presentation?.titleStyle === "place" ? PLACE_CARD_MS - 500 : 0;
     const ids = new Set(found.map((toast) => toast.id));
-    window.setTimeout(() => setToasts((current) => current.filter((toast) => !ids.has(toast.id))), TOAST_MS);
+    window.setTimeout(() => {
+      setToasts((current) => [...current, ...found].slice(-3));
+      window.setTimeout(() => setToasts((current) => current.filter((toast) => !ids.has(toast.id))), TOAST_MS);
+    }, delay);
   }, [run, chapter]);
 
   useEffect(() => { if (node) preloadVisualAssets(getNextVisualAssets(chapter, node)); }, [chapter, node]);
@@ -212,7 +218,7 @@ export function Stage({ chapter, run, defaultPlayer }: { chapter: ChapterDefinit
           onLog={() => setLogOpen(true)}
           onMenu={() => setMenuOpen(true)}
         />
-        <Toasts toasts={toasts} />
+        <Toasts toasts={toasts} lowered={!immersive && !presentation.screen && !presentation.hideVitals && Boolean(presentation.clinicalData?.length)} />
       </div>
       <CaseSheet open={caseOpen} onClose={() => setCaseOpen(false)} chapter={chapter} state={run} onPrimary={store.setPrimaryDiagnosis} onMove={store.moveDiagnosis} onLink={store.toggleLinkedClue} />
       <BacklogSheet open={logOpen} onClose={() => setLogOpen(false)} entries={log} characters={chapter.characters} />

@@ -68,7 +68,7 @@ export interface VisualAssetDefinition {
   /** "missing" keeps a canonical slot in the manifest while the file is re-imported. */
   status?: "ready" | "missing";
   /** What the stage shows while the asset is missing. */
-  fallback?: { assetId?: string; backdrop?: BackdropKey; focalPoint?: { x: number; y: number } };
+  fallback?: { assetId?: string; backdrop?: BackdropKey; focalPoint?: { x: number; y: number }; label?: string };
 }
 
 export interface SceneHotspot {

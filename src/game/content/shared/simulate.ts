@@ -56,3 +56,31 @@ export function simulateChapter(chapter: ChapterDefinition, { runs = 300, seed =
   }
   return report;
 }
+
+/**
+ * Plays the chapter at random (with the given abilities) until a run enters
+ * `targetId`, so a review jump lands with a real history: inherited scene,
+ * place, clock and chart. Hubs that open only after several visits rule out
+ * a simple graph search.
+ */
+export function routeTo(chapter: ChapterDefinition, player: PlayerState, targetId: string, { seed = 7, runs = 3000, maxSteps = 900 }: { seed?: number; runs?: number; maxSteps?: number } = {}): GameState | undefined {
+  const completionNode = chapter.completion?.nodeId ?? "CASE_COMPLETE";
+  let rng = seed >>> 0;
+  const random = () => { const next = nextRandom(rng); rng = next.state; return next.value; };
+  for (let run = 0; run < runs; run++) {
+    let state = createRun(chapter, player, { seed: Math.floor(random() * 2 ** 31), timestamp: 1, runId: `route-${run}` });
+    for (let step = 0; step < maxSteps; step++) {
+      if (state.currentNodeId === targetId) return state;
+      if (state.currentNodeId === completionNode) break;
+      const node = chapter.nodes[state.currentNodeId];
+      if (node.autoNext && node.presentation?.autoAdvanceMs !== undefined) {
+        state = advanceTimedNode(state, chapter, state.updatedAt + 1);
+        continue;
+      }
+      const choices = getAvailableChoices(node, state).filter((choice) => !isShellAction(choice));
+      if (!choices.length) break;
+      state = executeChoice(state, chapter, choices[Math.floor(random() * choices.length)].id, state.updatedAt + 1);
+    }
+  }
+  return undefined;
+}

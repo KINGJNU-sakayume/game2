@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { defaultPlayer, getChapter } from "@/game/content";
 import { enterNode } from "@/game/engine/nodeResolver";
 import { createRun } from "@/game/engine/runFactory";
+import { routeTo } from "@/game/content/shared/simulate";
 import { useGameStore } from "@/game/state/gameStore";
 import { useSettings } from "@/game/state/settingsStore";
 import { Stage } from "@/components/stage/Stage";
@@ -16,8 +17,9 @@ function useUnlockAll() {
 }
 
 /**
- * Development only: `?chapter=chapter-01&node=APT_001` opens a scene directly
- * for layout review. Production builds ignore it.
+ * Development only: `?chapter=chapter-01&node=APT_001` opens a scene for layout
+ * review, reached by actually playing there when a route exists. Production
+ * builds ignore it.
  */
 function useDevSceneJump(hydrated: boolean) {
   useEffect(() => {
@@ -26,7 +28,7 @@ function useDevSceneJump(hydrated: boolean) {
     const nodeId = params.get("node");
     const chapter = getChapter(params.get("chapter") ?? "chapter-01");
     if (!nodeId || !chapter?.nodes[nodeId]) return;
-    const run = enterNode(createRun(chapter, defaultPlayer, { seed: 7 }), chapter, nodeId, Date.now());
+    const run = routeTo(chapter, defaultPlayer, nodeId) ?? enterNode(createRun(chapter, defaultPlayer, { seed: 7 }), chapter, nodeId, Date.now());
     useGameStore.setState({ activeRun: run, screen: "play" });
   }, [hydrated]);
 }

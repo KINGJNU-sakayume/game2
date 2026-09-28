@@ -9,7 +9,7 @@ import type { ChapterDefinition, Choice, GameState, StoryNode } from "@/game/typ
 import { ChoiceList } from "./ChoiceList";
 import { ConferenceBoard } from "./ConferenceBoard";
 import { DialogueBox, PageBody } from "./DialogueBox";
-import { PlaceCard, SceneCard } from "./SceneCard";
+import { PLACE_CARD_MS, PlaceCard, SceneCard } from "./SceneCard";
 import { useTypewriter } from "./useTypewriter";
 
 type BlockingCard = "chapter" | "phase" | "ending";
@@ -83,7 +83,7 @@ export function NodeView({ chapter, run, node, cps, autoAdvance, disabled, pause
 
   useEffect(() => {
     if (!placeVisible) return;
-    const timer = window.setTimeout(() => setPlaceVisible(false), 2800);
+    const timer = window.setTimeout(() => setPlaceVisible(false), PLACE_CARD_MS);
     return () => window.clearTimeout(timer);
   }, [placeVisible]);
 

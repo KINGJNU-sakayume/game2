@@ -57,7 +57,7 @@ export function EvidenceView({ asset }: { asset: VisualAssetDefinition }) {
     <section className={`evidence ${missing ? "is-note" : ""}`} aria-label="증거" onClick={(event) => event.stopPropagation()}>
       {missing ? (
         <div className="evidence-note">
-          <span className="evidence-tag">현장 메모</span>
+          <span className="evidence-tag">{asset.fallback?.label ?? "현장 메모"}</span>
           <p className="evidence-caption">{asset.alt}</p>
           <EvidenceData asset={asset} />
         </div>

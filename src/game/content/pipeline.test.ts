@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { chapters, getChapter, getNextChapter, isChapterUnlocked, nextUnplayedChapter } from "@/game/content";
+import { chapters, defaultPlayer, getChapter, getNextChapter, isChapterUnlocked, nextUnplayedChapter } from "@/game/content";
 import { lintChapter, validateChapterGraph, validateVisualAssets } from "@/game/content/shared/validation";
-import { simulateChapter } from "@/game/content/shared/simulate";
+import { routeTo, simulateChapter } from "@/game/content/shared/simulate";
 import { emptyProfile } from "@/game/state/saveStore";
 
 /**
@@ -45,6 +45,14 @@ describe.each(chapters.map((chapter) => [chapter.id, chapter] as const))("story 
   it("leaves no authored node unseen across random play", () => {
     const report = simulateChapter(chapter, { runs: 1200, seed: 7 });
     expect(Object.keys(chapter.nodes).filter((id) => !report.visited.has(id))).toEqual([]);
+  });
+
+  it("routes a review jump to any ending through real play", () => {
+    for (const ending of ["END_A", "END_E", chapter.completion?.nodeId ?? "CASE_COMPLETE"]) {
+      const state = routeTo(chapter, defaultPlayer, ending);
+      expect(state?.currentNodeId, ending).toBe(ending);
+      expect(state?.visitedNodeIds.length, ending).toBeGreaterThan(10);
+    }
   });
 });
 

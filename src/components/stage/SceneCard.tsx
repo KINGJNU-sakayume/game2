@@ -33,6 +33,9 @@ export function SceneCard({ style, title, caption, onDone, duration }: {
 }
 
 /** A lower-third caption for arriving somewhere. It never blocks input. */
+/** How long a place title holds the top of the screen. */
+export const PLACE_CARD_MS = 2800;
+
 export function PlaceCard({ title, meta }: { title: string; meta?: string }) {
   return (
     <div className="place-card" role="status">
