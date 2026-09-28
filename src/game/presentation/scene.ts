@@ -31,16 +31,24 @@ const nodeScene = (chapter: ChapterDefinition, node: StoryNode | undefined): Sce
   return presentation.backdrop ? { type: "backdrop", key: presentation.backdrop } : undefined;
 };
 
+/** Conference boards and immersive blackouts are moments, not places: later nodes never inherit them. */
+const isPlace = (node: StoryNode | undefined) => node?.presentation?.mode !== "conference" && node?.presentation?.mode !== "immersive";
+
 /**
  * The place the player is standing in. Nodes without art inherit the latest
  * scene from the run history, so this also survives a reload.
  */
 export function sceneFor(chapter: ChapterDefinition, run: GameState, fallback: BackdropKey = "paper"): SceneArt {
+  const current = chapter.nodes[run.currentNodeId];
+  const own = nodeScene(chapter, current);
+  if (own) return own;
   for (let index = run.visitedNodeIds.length - 1; index >= 0; index--) {
-    const scene = nodeScene(chapter, chapter.nodes[run.visitedNodeIds[index]]);
+    const node = chapter.nodes[run.visitedNodeIds[index]];
+    if (!isPlace(node)) continue;
+    const scene = nodeScene(chapter, node);
     if (scene) return scene;
   }
-  return nodeScene(chapter, chapter.nodes[run.currentNodeId]) ?? { type: "backdrop", key: fallback };
+  return { type: "backdrop", key: fallback };
 }
 
 /** The latest named location in the run history (nodes rarely repeat it). */

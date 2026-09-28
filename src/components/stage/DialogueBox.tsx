@@ -19,7 +19,7 @@ const abilityStyle = (ability?: string) => ({ "--ability": `var(--ab-${ability ?
 function Voice({ beat, text }: { beat: Extract<Beat, { kind: "thought" }>; text: string }) {
   const presentation = beat.ability ? ABILITY_PRESENTATION[beat.ability] : undefined;
   return (
-    <div className="voice" style={abilityStyle(beat.ability)}>
+    <div className="voice" data-memory={beat.ability ? undefined : ""} style={abilityStyle(beat.ability)}>
       <span className="voice-tag"><span aria-hidden="true">{presentation?.symbol}</span>{presentation?.name ?? beat.label}</span>
       <p>{text}</p>
     </div>

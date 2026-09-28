@@ -22,6 +22,13 @@ export const note = (text: string, conditions?: Condition[]): NarrativeBlock => 
 export const thought = (ability: AbilityName, text: string, threshold?: number): NarrativeBlock => ({
   type: "thought", ability, text, conditions: threshold === undefined ? undefined : [atLeast(ability, threshold)],
 });
+/**
+ * A Case Memory from an earlier chapter speaking up. It only exists for players
+ * who closed that case (the run starts with `memory_<id>` set).
+ */
+export const memoryVoice = (memoryId: string, text: string, conditions: Condition[] = []): NarrativeBlock => ({
+  type: "thought", label: "기억", text, conditions: [flag(`memory_${memoryId}`), ...conditions],
+});
 /** An inner voice with arbitrary conditions. */
 export const voice = (ability: AbilityName, text: string, conditions?: Condition[]): NarrativeBlock => ({ type: "thought", ability, text, conditions });
 

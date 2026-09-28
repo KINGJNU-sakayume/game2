@@ -1,8 +1,9 @@
 import type { ChapterDefinition, PersistentProfile } from "@/game/types";
 import { chapter01, defaultPlayer } from "./chapter01";
+import { chapter02 } from "./chapter02";
 
 /** Every playable chapter, in story order. */
-export const chapters: readonly ChapterDefinition[] = [chapter01];
+export const chapters: readonly ChapterDefinition[] = [chapter01, chapter02];
 
 export { defaultPlayer };
 

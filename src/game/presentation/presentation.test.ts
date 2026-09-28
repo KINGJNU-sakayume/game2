@@ -50,6 +50,12 @@ describe("scene resolution", () => {
     expect(locationFor(chapter01, state)).toBe("윤하린의 원룸");
   });
 
+  it("never carries a case board or a blackout into the scenes that follow", () => {
+    const afterBoard = run("DET_003", "CASE_002", "CASE_003");
+    expect(sceneFor(chapter01, afterBoard)).toMatchObject({ type: "asset", asset: { id: "SCN_005_ER_DETERIORATION" } });
+    expect(sceneFor(chapter01, run("DET_003", "CASE_002"))).toEqual({ type: "backdrop", key: "board" });
+  });
+
   it("treats one plain forward choice as tap-to-continue, never a check or an action", () => {
     expect(continueChoice(chapter01.nodes.PR_002.choices!)?.id).toBe("continue-PR_003");
     expect(continueChoice(chapter01.nodes.ER_PAIN_02.choices!)).toBeUndefined();

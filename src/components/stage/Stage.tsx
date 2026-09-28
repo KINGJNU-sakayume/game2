@@ -198,7 +198,7 @@ export function Stage({ chapter, run, defaultPlayer }: { chapter: ChapterDefinit
           placeMeta={[presentation.timeLabel, presentation.location !== node.title ? presentation.location : undefined].filter(Boolean).join(" · ") || undefined}
           renderExtra={renderExtra}
           customChoices={presentation.screen === "archive" || presentation.screen === "complete"}
-          hotspotScene={availableHotspots.length > 0}
+          hotspotScene={art.type === "asset" && availableHotspots.length > 0}
         />
         <Hud
           minimal={immersive || Boolean(presentation.screen)}
