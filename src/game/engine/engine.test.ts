@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { resolveCheck } from "./checkResolver";
 import { evaluateCondition } from "./conditionResolver";
 import { applyEffects } from "./effectResolver";
-import { enterNode, executeChoice, getAvailableChoices } from "./nodeResolver";
+import { advanceTimedNode, enterNode, executeChoice, getAvailableChoices } from "./nodeResolver";
+import { growFromRun } from "./progression";
 import type { ChapterDefinition, GameState } from "@/game/types";
 import { zeroResonance } from "@/game/abilities";
 
@@ -105,6 +106,42 @@ describe("node resolver", () => {
     const firstVisit = enterNode(state(), chapter, "end", 1);
     const secondVisit = enterNode(firstVisit, chapter, "end", 2);
     expect(secondVisit.visitedNodeIds).toEqual(["end", "end"]);
+  });
+});
+
+describe("timed transitions and growth", () => {
+  it("runs exit effects when a timed node leaves on schedule", () => {
+    const chapter: ChapterDefinition = {
+      id: "timed", title: "Timed", startNodeId: "card", nodes: {
+        card: { id: "card", blocks: [], autoNext: "next", onExit: [{ type: "flag", key: "left_card", value: true }], presentation: { autoAdvanceMs: 100 } },
+        next: { id: "next", blocks: [] },
+      },
+    };
+    const onCard = enterNode(state(), chapter, "card", 1);
+    expect(onCard.currentNodeId).toBe("card");
+    const moved = advanceTimedNode(onCard, chapter, 2);
+    expect(moved.currentNodeId).toBe("next");
+    expect(moved.flags.left_card).toBe(true);
+  });
+
+  it("resonates an ability on a first successful check only", () => {
+    const chapter: ChapterDefinition = {
+      id: "roll", title: "Roll", startNodeId: "a", nodes: {
+        a: { id: "a", blocks: [], choices: [{ id: "roll", label: "Roll", check: { id: "r1", ability: "empathy", dc: 2 }, next: { success: "a", failure: "a" } }] },
+      },
+    };
+    const once = executeChoice(state({ currentNodeId: "a" }), chapter, "roll", 1);
+    expect(once.resonance.empathy).toBe(1);
+    const twice = executeChoice(once, chapter, "roll", 2);
+    expect(twice.resonance.empathy).toBe(1);
+  });
+
+  it("grows the most-resonant ability by one, capped and deterministic", () => {
+    const player = state().player;
+    expect(growFromRun(player, { ...zeroResonance(), history: 2, empathy: 2 }).grown).toBe("history");
+    expect(growFromRun(player, zeroResonance()).grown).toBeUndefined();
+    const capped = { ...player, abilities: { ...player.abilities, history: 5 } };
+    expect(growFromRun(capped, { ...zeroResonance(), history: 3, empathy: 1 }).grown).toBe("empathy");
   });
 });
 

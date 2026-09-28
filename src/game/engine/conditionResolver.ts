@@ -15,6 +15,7 @@ export function evaluateCondition(condition: Condition, state: GameState): boole
   switch (condition.type) {
     case "all": return evaluateConditions(condition.conditions, state);
     case "any": return condition.conditions.some((item) => evaluateCondition(item, state));
+    case "not": return !evaluateCondition(condition.condition, state);
     case "flagCount": return compare(condition.keys.filter((key) => state.flags[key]).length, condition.operator, condition.value);
     case "value": {
       const actual = state.values[condition.key];

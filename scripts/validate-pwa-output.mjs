@@ -17,6 +17,8 @@ const manifest = JSON.parse(readFileSync("out/manifest.webmanifest", "utf8"));
 const expectedHtml = [
   'rel="manifest" href="/game2/manifest.webmanifest"',
   'rel="apple-touch-icon" href="/game2/apple-icon?',
+  // app/icon.svg: without a declared icon, browsers request /favicon.ico at the origin root, outside the base path.
+  'rel="icon" href="/game2/icon.svg',
 ];
 for (const fragment of expectedHtml) {
   if (!html.includes(fragment)) throw new Error(`index.html is missing: ${fragment}`);

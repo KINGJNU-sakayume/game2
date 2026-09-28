@@ -1,7 +1,7 @@
 /* A deliberately small service worker for the static GitHub Pages build. */
 const CACHE_PREFIX = "after-the-rain-";
-const SHELL_CACHE = `${CACHE_PREFIX}shell-v1`;
-const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-v1`;
+const SHELL_CACHE = `${CACHE_PREFIX}shell-v2`;
+const RUNTIME_CACHE = `${CACHE_PREFIX}runtime-v2`;
 
 const scopeUrl = new URL(self.registration.scope);
 const scopePath = scopeUrl.pathname.endsWith("/") ? scopeUrl.pathname : `${scopeUrl.pathname}/`;

@@ -27,7 +27,13 @@ export async function saveProfile(profile: PersistentProfile): Promise<void> {
 }
 
 export function completeCase(profile: PersistentProfile, caseId: string, memory: PersistentProfile["caseMemories"][number], archive: PersistentProfile["archives"][number]): PersistentProfile {
-  return { completedCases: [...new Set([...profile.completedCases, caseId])], caseMemories: profile.caseMemories.some(({ id }) => id === memory.id) ? profile.caseMemories : [...profile.caseMemories, memory], archives: [...profile.archives.filter(({ caseId: id }) => id !== archive.caseId), archive], firstEndingCompleted: true };
+  return {
+    ...profile,
+    completedCases: [...new Set([...profile.completedCases, caseId])],
+    caseMemories: profile.caseMemories.some(({ id }) => id === memory.id) ? profile.caseMemories : [...profile.caseMemories, memory],
+    archives: [...profile.archives.filter(({ caseId: id }) => id !== archive.caseId), archive],
+    firstEndingCompleted: true,
+  };
 }
 
 let database: GameDatabase | undefined;

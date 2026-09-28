@@ -7,12 +7,12 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "비가 그친 뒤",
     short_name: "비가 그친 뒤",
-    description: "선택으로 이어지는 서사형 의료 드라마",
+    description: "정상 검사 뒤에 숨은 병을 찾는 선택형 의료 미스터리",
     start_url: withBasePath("/"),
     scope: withBasePath("/"),
     display: "standalone",
-    background_color: "#080d12",
-    theme_color: "#11100f",
+    background_color: "#f3efe7",
+    theme_color: "#f3efe7",
     orientation: "portrait-primary",
     lang: "ko",
     icons: [

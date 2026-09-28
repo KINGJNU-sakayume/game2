@@ -1,5 +1,9 @@
 import type { SceneHotspot } from "@/game/types";
 
+/**
+ * Photograph shortcuts to choices on the same node. Every hotspot duplicates a
+ * text choice, so the scene stays fully playable without them.
+ */
 export function SceneHotspots({ hotspots, disabled, onHotspot }: {
   hotspots: SceneHotspot[];
   disabled: boolean;
@@ -14,8 +18,8 @@ export function SceneHotspots({ hotspots, disabled, onHotspot }: {
       data-hotspot-icon={hotspot.icon}
       aria-label={hotspot.label}
       disabled={disabled}
-      onClick={() => onHotspot(hotspot.choiceId)}
+      onClick={(event) => { event.stopPropagation(); onHotspot(hotspot.choiceId); }}
       style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%`, width: hotspot.width ? `${hotspot.width}%` : undefined, height: hotspot.height ? `${hotspot.height}%` : undefined }}
-    ><span aria-hidden="true" /></button>)}
+    ><span aria-hidden="true" /><em>{hotspot.label.replace(/ 조사$/, "")}</em></button>)}
   </div>;
 }

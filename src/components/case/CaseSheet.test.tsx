@@ -6,7 +6,7 @@ const props={open:true,onClose:vi.fn(),chapter:chapter01,state,onPrimary:vi.fn()
 afterEach(cleanup);
 describe("CaseSheet",()=>{
  it("is an accessible modal and only exposes acquired clue metadata",()=>{render(<CaseSheet {...props}/>);expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal","true");expect(screen.getByText("변비")).toBeInTheDocument();expect(screen.queryByText("constipation")).not.toBeInTheDocument()});
- it("switches tabs and labels pending tests",()=>{render(<CaseSheet {...props}/>);fireEvent.click(screen.getByRole("tab",{name:"TESTS"}));expect(screen.getByText("소변 PBG / ALA")).toBeInTheDocument();expect(screen.getByText("검사 중")).toBeInTheDocument()});
- it("shows only unlocked diagnoses without probability or score",()=>{render(<CaseSheet {...props}/>);fireEvent.click(screen.getByRole("tab",{name:"DDx"}));expect(screen.getByText("납중독")).toBeInTheDocument();expect(screen.queryByText(/확률|점수|%/)).not.toBeInTheDocument()});
+ it("switches tabs and labels pending tests",()=>{render(<CaseSheet {...props}/>);fireEvent.click(screen.getByRole("tab",{name:"검사"}));expect(screen.getByText("소변 PBG / ALA")).toBeInTheDocument();expect(screen.getByText("검사 중")).toBeInTheDocument()});
+ it("shows only unlocked diagnoses without probability or score",()=>{render(<CaseSheet {...props}/>);fireEvent.click(screen.getByRole("tab",{name:"감별"}));expect(screen.getByText("납중독")).toBeInTheDocument();expect(screen.queryByText(/확률|점수|%/)).not.toBeInTheDocument()});
  it("closes with Escape",()=>{const close=vi.fn();render(<CaseSheet {...props} onClose={close}/>);fireEvent.keyDown(document,{key:"Escape"});expect(close).toHaveBeenCalled()});
 });
