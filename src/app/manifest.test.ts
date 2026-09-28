@@ -9,8 +9,8 @@ describe("PWA manifest", () => {
     expect(manifest).toMatchObject({
       name: "비가 그친 뒤",
       display: "standalone",
-      theme_color: "#11100f",
-      background_color: "#080d12",
+      theme_color: "#f3efe7",
+      background_color: "#f3efe7",
       start_url: "/",
       scope: "/",
     });

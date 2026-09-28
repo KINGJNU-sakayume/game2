@@ -13,8 +13,9 @@ vi.mock("./saveStore", () => ({
   loadProfile: vi.fn().mockResolvedValue({ completedCases: [], caseMemories: [], archives: [], firstEndingCompleted: false }),
   saveActiveRun: persistence.save,
   saveProfile: persistence.profileSave,
-  clearActiveRun: vi.fn(),
+  clearActiveRun: vi.fn().mockResolvedValue(undefined),
   completeCase: vi.fn((profile, caseId, memory, archive) => ({
+    ...profile,
     completedCases: [...new Set([...profile.completedCases, caseId])],
     caseMemories: profile.caseMemories.some((item: { id: string }) => item.id === memory.id) ? profile.caseMemories : [...profile.caseMemories, memory],
     archives: [...profile.archives.filter((item: { caseId: string }) => item.caseId !== archive.caseId), archive],
@@ -154,6 +155,43 @@ describe("gameStore persistence failures", () => {
     expect(persistence.profileSave).toHaveBeenCalledTimes(1);
     expect(result.persistenceStatus).toBe("degraded");
     expect(result.inputLocked).toBe(false);
+  });
+
+  it("grows the ability the run leaned on, only the first time a case closes", async () => {
+    const completionChapter: ChapterDefinition = {
+      id: "growth-test", title: "Growth", startNodeId: "start",
+      nodes: {
+        start: { id: "start", blocks: [], choices: [{ id: "finish", label: "Finish", next: "CASE_COMPLETE" }] },
+        CASE_COMPLETE: { id: "CASE_COMPLETE", blocks: [], choices: [{ id: "again", label: "Again", next: "start" }] },
+      },
+      completion: {
+        caseId: "growth-test",
+        memory: { id: "growth-memory", title: "Memory", description: "Description", sourceChapter: "growth-test" },
+        archive: { caseId: "CASE G", title: "Growth", finalDiagnosis: "D", biochemicalDiagnosis: "B", subtypeConfirmation: "S", complications: [] },
+      },
+    };
+    useGameStore.setState({ activeRun: { ...initialState(), chapterId: completionChapter.id, resonance: { ...zeroResonance(), empathy: 1, reasoning: 2 } } });
+    persistence.save.mockResolvedValue(undefined);
+    persistence.profileSave.mockResolvedValue(undefined);
+
+    await useGameStore.getState().choose(completionChapter, "finish");
+    expect(useGameStore.getState().lastGrowth).toEqual({ chapterId: "growth-test", ability: "reasoning" });
+    expect(useGameStore.getState().profile.player?.abilities.reasoning).toBe(3);
+
+    await useGameStore.getState().choose(completionChapter, "again");
+    await useGameStore.getState().choose(completionChapter, "finish");
+    expect(useGameStore.getState().profile.player?.abilities.reasoning).toBe(3);
+  });
+
+  it("starts a chapter with every unlocked Case Memory available to its content", async () => {
+    useGameStore.setState({ profile: { completedCases: ["a"], caseMemories: [{ id: "normal_is_not_diagnosis", title: "t", description: "d", sourceChapter: "a" }], archives: [], firstEndingCompleted: true } });
+    persistence.save.mockResolvedValue(undefined);
+    persistence.profileSave.mockResolvedValue(undefined);
+    await useGameStore.getState().startChapter(chapter, initialState().player, 9);
+    const run = useGameStore.getState().activeRun!;
+    expect(run.flags.memory_normal_is_not_diagnosis).toBe(true);
+    expect(run.currentNodeId).toBe("start");
+    expect(useGameStore.getState().screen).toBe("play");
   });
 
   it("restores the same current node from a saved run", async () => {

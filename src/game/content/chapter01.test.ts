@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateConditions } from "@/game/engine/conditionResolver";
 import { enterNode, executeChoice, getAvailableChoices } from "@/game/engine/nodeResolver";
 import type { GameState, PlayerState } from "@/game/types";
-import { defaultPlayer, demoChapter } from "./demoChapter";
+import { chapter01 as demoChapter, defaultPlayer } from "./chapter01";
 import { zeroResonance } from "@/game/abilities";
 
 function chapterState(player: PlayerState = defaultPlayer): GameState {
@@ -31,7 +31,7 @@ describe("Chapter 1 vertical slice", () => {
   });
 
   it("shows the PR_002 passive observation block only at threshold 3", () => {
-    const passive = demoChapter.nodes.PR_002.blocks.find((block) => block.type === "thought")!;
+    const passive = demoChapter.nodes.PR_002.blocks.find((block: { type: string }) => block.type === "thought")!;
     const below = chapterState({ ...defaultPlayer, abilities: { ...defaultPlayer.abilities, observation: 2 } });
     const threshold = chapterState({ ...defaultPlayer, abilities: { ...defaultPlayer.abilities, observation: 3 } });
     expect(evaluateConditions(passive.conditions, below)).toBe(false);

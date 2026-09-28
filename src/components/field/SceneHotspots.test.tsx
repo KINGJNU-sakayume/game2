@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SceneHotspots } from "./SceneHotspots";
-import { getVisibleHotspots } from "@/components/game/SceneRenderer";
+import { getVisibleHotspots } from "@/game/presentation/scene";
 import type { SceneHotspot } from "@/game/types";
 
 const hotspots: SceneHotspot[] = [

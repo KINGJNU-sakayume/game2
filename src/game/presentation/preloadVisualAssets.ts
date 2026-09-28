@@ -1,5 +1,6 @@
 import type { ChapterDefinition, StoryNode, VisualAssetDefinition } from "@/game/types";
 import { resolveAssetUrl } from "./assetUrl";
+import { resolveAsset } from "./scene";
 
 export const MAX_VISUAL_PRELOADS = 2;
 
@@ -16,9 +17,10 @@ function destinations(node: StoryNode): string[] {
 export function getNextVisualAssets(chapter: ChapterDefinition, node: StoryNode, limit = MAX_VISUAL_PRELOADS): VisualAssetDefinition[] {
   const seen = new Set<string>();
   return destinations(node).flatMap(id => {
-    const assetId = chapter.nodes[id]?.presentation?.assetId;
-    const asset = assetId ? chapter.visualAssets?.[assetId] : undefined;
-    if (!asset || asset.referenceOnly || seen.has(asset.id)) return [];
+    // Missing assets resolve to their fallback, so a broken import is never requested.
+    const art = resolveAsset(chapter, chapter.nodes[id]?.presentation?.assetId);
+    const asset = art?.type === "asset" ? art.asset : undefined;
+    if (!asset || seen.has(asset.id)) return [];
     seen.add(asset.id); return [asset];
   }).slice(0, Math.min(limit, MAX_VISUAL_PRELOADS));
 }
